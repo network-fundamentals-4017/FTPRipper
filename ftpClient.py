@@ -1,5 +1,8 @@
 import asyncore, asynchat
-import re, socket
+import re, socket, sys
+
+# get port number from pasv response
+pasv_pattern = re.compile("[-\d]+,[-\d]+,[-\d]+,[-\d]+,([-\d]+),([-\d]+)")
 
 port = 21
 print("Begin FTP Process")
@@ -9,7 +12,7 @@ class controlConnection(asynchat.async_chat):
     def __init__(self, host):
         asynchat.async_chat.__init__(self)
         self.host = host
-        self.commands = ["PWD", "QUIT"]
+        self.commands = ["PASV", self.ftp_handle_pasv_response,"LIST", "QUIT"]
         print("Initializing")
         self.set_terminator("\n")
         self.data=""
@@ -63,8 +66,11 @@ class controlConnection(asynchat.async_chat):
 
         #send next command from queue
         try:
-            print("C: " + self.commands[0])
-            self.push(self.conmmands.pop(0) + "\r\n")
+            command = self.commands.pop(0)
+            if self.commands and callable(self.commands[0]):
+                self.handler = self.commands.pop(0)
+            print("C: " + command)
+            self.push(command + "\r\n")
         except IndexError:
             pass  # no more commands
 
@@ -92,6 +98,43 @@ class controlConnection(asynchat.async_chat):
             return #username and password accepted
         else:
             raise Exception("ftp login failed: username/password not accepted")
+
+    def ftp_handle_pasv_response(self, response):
+        code = response[-1][:3]
+        if code != "227":
+            return #pasv failed
+        match = pasv_pattern.search(response[-1])
+        if not match:
+            return #bad port
+        p1, p2 = match.groups()
+        try:
+            port = (int(p1) & 255)*256 + (int(p2) & 255)
+        except ValueError:
+            return # bad port
+        #establish data connection
+        async_ftp_download(self.host, port)
+
+class aysnc_ftp_download(asyncore.dispatcher):
+
+    def __init__(self, host, port):
+        asyncore.dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect((host, port))
+
+    def writable(self):
+        return 0
+
+    def handle_connect(self):
+        pass
+
+    def handle_expt(self):
+        self.close()
+
+    def handle_read(self):
+        sys.stdout.write(self.recv(8192))
+
+    def handle_close(self):
+        self.close()
 
 controlConnection("ftp.python.org")
 asyncore.loop()
