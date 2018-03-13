@@ -75,6 +75,7 @@ class controlConnection(asynchat.async_chat):
             pass  # no more commands
 
     def ftp_handle_connect(self, response):
+        print("ftp handle connect")
         code = response[-1][:3]
         if code == "220":
             self.push("USER " + self.username + "\r\n")
@@ -114,7 +115,7 @@ class controlConnection(asynchat.async_chat):
         #establish data connection
         async_ftp_download(self.host, port)
 
-class aysnc_ftp_download(asyncore.dispatcher):
+class async_ftp_download(asyncore.dispatcher):
 
     def __init__(self, host, port):
         asyncore.dispatcher.__init__(self)
@@ -136,5 +137,5 @@ class aysnc_ftp_download(asyncore.dispatcher):
     def handle_close(self):
         self.close()
 
-controlConnection("ftp.python.org")
+controlConnection("ftp.microsoft.com")
 asyncore.loop()
