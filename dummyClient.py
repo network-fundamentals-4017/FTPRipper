@@ -1,10 +1,10 @@
 import ftplib
 import sys
+import os
 
 connected = False
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
-
 
 class bcolors:
     HEADER = '\033[95m'
@@ -16,6 +16,8 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def osls(params):
+    print(os.getcwd())
 
 def ll(params):
     FileStreem = []
@@ -31,7 +33,10 @@ def ls(params):
 
 
 def cd(params):
-    ftp.cwd(params[0])
+    try:
+        ftp.cwd(params[0])
+    except Exception as e:
+        print("Failed to change directory " + str(e))
 
 
 def pwd(params):
@@ -68,6 +73,26 @@ def close(params):
         return
     sys.exit()
 
+def push(params):
+    file = params[0]
+    ext = os.path.splitext(file)[1]
+    try:
+        if ext in (".txt", ".htm", ".html"):
+            ftp.storlines("STOR " + file, open(file))
+        else:
+            ftp.storbinary("STOR " + file, open(file, "rb"), 1024)
+        print(bcolors.OKGREEN+"Upload Successful!"+bcolors.ENDC)
+    except Exception as e:
+        print(bcolors.FAIL+"Upload failed with error " + str(e) + bcolors.ENDC)
+
+def get(params):
+    filename=params[0]
+    try:
+        print("Retrieving file...")
+        ftp.retrbinary("RETR " + filename ,open(filename, 'wb').write)
+        print(bcolors.OKGREEN+"File retrieved successfully"+bcolors.ENDC)
+    except Exception as e:
+        print (bcolors.FAIL+"Error occured when getting File: " +str(e)+bcolors.ENDC)
 
 def logout(params):
     ftp.quit()
@@ -75,14 +100,60 @@ def logout(params):
     connected = False
     print(bcolors.WARNING + "Your session has been closed" + bcolors.ENDC)
 
+def osCommands(userInput):
+
+    def oscd(params):
+        print(params)
+        os.chdir(params[0])
+
+    def ospwd(params):
+        print(os.getcwd())
+
+    def osls(params):
+        if len(params)==0: #if the user did not spesify a path of files to print, use current directory
+            path=os.getcwd()
+        else:
+            path=params[0]
+        print(path)
+        fileList = os.listdir(path)
+        for file in fileList:
+            print(file, end="\t")
+        print()
+
+    def oshelp(params):
+        print("All possible commands for system calls (defined by !) are:")
+        for command in osOptions.items():
+            if (len(command[0]) < 4):
+                print(command[0] + "\t\t" + command[1][1])
+                continue
+            print(command[0] + "\t" + command[1][1])
+
+    osOptions = {
+        'cd': [oscd,"Change the current working directory"],
+        'pwd': [ospwd,"List the current working directory path"],
+        'ls': [osls,"List the files in a directory"],
+        'help': [oshelp,"List help of system based commands"]
+    }
+    if len(userInput) > 0:
+        command = userInput[0]
+        if len(userInput) > 1:
+            params = userInput[1:len(userInput)]
+        else:
+            params = []
+        if command in osOptions:
+            osOptions[command][0](params)
+        else:
+            print(bcolors.WARNING + "Command: '" + command + "' not found. Run 'help' to view all posible commands" + bcolors.ENDC)
 
 runOptions = {
-    'll': [ll,
-           "List all files and folders, with permissions, size and ownership, in the current directory of the server"],
+    'll': [ll,"List all files and folders, with permissions, size and ownership, in the current directory of the server"],
     'ls': [ls, "List all files and folders in the current directory of the server"],
+    '!': [osCommands,"Any command proceeded by a bang will be run on the local machine(type !help for more)."],
     'cd': [cd, "Change Location of the server path to specified parameter. Relative paths are acceptable"],
     'pwd': [pwd, "Print the full current server path"],
     'rm': [rm, "Remove file(or folder) on server"],
+    'download': [get, "Retrives a file from the remote server to current location on local machine"],
+    'upload': [push,"Upload file from local machine to the remote server"],
     'mkdir': [mkdir, "Create a folder on server"],
     'help': [help, "Print all commands and their descriptions"],
     'close': [close, "Terminate FTP session and close application"],
@@ -138,6 +209,6 @@ while 1:  # Main program loop
             if command in runOptions:
                 runOptions[command][0](params)
             else:
-                print(bcolors.WARNING+"Command: " + command + " not found. Run 'help' to view all posible commands"+bcolors.ENDC)
+                print(bcolors.WARNING+"Command: '" + command + "' not found. Run 'help' to view all posible commands"+bcolors.ENDC)
     if not connected:
         userLogin()
