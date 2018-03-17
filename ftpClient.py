@@ -29,12 +29,17 @@ def userLogin(sct):
     print("C: " + message)
     data = sct.recv(1024).decode('latin-1')
     print("S: " + data)
-    if data.startswith("331"):
+    if data.startswith("331") or data.startswith("332"):
         message = 'PASS @anonymous\r\n'
         sct.send(message.encode('latin-1'))
         print("C: " + message)
         data = sct.recv(1024).decode('latin-1')
         print("S: " + data)
+    if data.startswith("230"):
+        print("Successfully logged into ftp server :)")
+    if data.startswith("530"):
+        print("Login failed")
+
 
 if __name__ == '__main__':
     Main()
