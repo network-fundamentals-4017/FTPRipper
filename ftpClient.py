@@ -19,7 +19,7 @@ def Main():
 	print ("S: " + data)
 	if data.startswith("220"):
 		userLogin(controlSocket)
-		#getList(controlSocket)
+		getList(controlSocket)
 		#downloadBinFiles(controlSocket,'files/test.txt')
 		#changeWorkingDirectory(controlSocket, 'files')	
 		#removeDirectory(controlSocket, 'newDir')
