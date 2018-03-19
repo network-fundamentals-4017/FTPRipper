@@ -2,7 +2,7 @@ import socket
 import sys
 
 def Main():
-	host = "ELEN4017.ug.eie.wits.ac.za"
+	host = '146.141.125.39'
 	port = 21
 
 	print("Begin FTP Client...")
@@ -15,31 +15,30 @@ def Main():
 		sys.exit()
 	print("Socket established")
 
-	data = controlSocket.recv(8192).decode('latin-1')
+	data = controlSocket.recv(8192).decode()
 	print ("S: " + data)
 	if data.startswith("220"):
-		print("Provide a user")
 		userLogin(controlSocket)
-		getList(controlSocket)
-		downloadBinFiles(controlSocket,'files/test.txt')
+		#getList(controlSocket)
+		#downloadBinFiles(controlSocket,'files/test.txt')
 		#changeWorkingDirectory(controlSocket, 'files')	
 		#removeDirectory(controlSocket, 'newDir')
 		#getList(controlSocket)
-		uploadFile(controlSocket,'files/test2.txt','test2.txt')
-		quit(controlSocket)
+		#uploadFile(controlSocket,'files/test2.txt','test2.txt')
+		#quit(controlSocket)
 	controlSocket.close()
 
 def userLogin(controlSocket):
     message = 'USER group10\r\n'
-    controlSocket.send(message.encode('latin-1'))
+    controlSocket.send(message.encode())
     print("C: " + message)
-    data = controlSocket.recv(8192).decode('latin-1')
+    data = controlSocket.recv(8192).decode()
     print("S: " + data)
     if data.startswith("331") or data.startswith("332"):
         message = 'PASS osh4ogoo\r\n'
-        controlSocket.send(message.encode('latin-1'))
+        controlSocket.send(message.encode())
         print("C: " + message)
-        data = controlSocket.recv(8192).decode('latin-1')
+        data = controlSocket.recv(8192).decode()
         print("S: " + data)
     if data.startswith("230"):
         print("Successfully logged into ftp server :)")
