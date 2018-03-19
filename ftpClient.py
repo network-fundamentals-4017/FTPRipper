@@ -48,9 +48,9 @@ def userLogin(controlSocket):
 
 def getPortNumber(controlSocket):
 	message = 'PASV\r\n'
-	controlSocket.send(message.encode('latin-1'))
+	controlSocket.send(message.encode())
 	print("C: " + message)
-	data = controlSocket.recv(8192).decode('latin-1')
+	data = controlSocket.recv(8192).decode()
 	print("S: " + data)
 	data = data[data.find('(')+1:data.find(')')]
 	data = data.split(",")
@@ -58,13 +58,10 @@ def getPortNumber(controlSocket):
 	dataPort = data[-2:]
 	dataPort = (int(dataPort[0])*256)+int(dataPort[1])
 	return (dataHost, dataPort)
-	#setupDataConnection(controlSocket, dataHost, dataPort)
 	
 def setupDataConnection(controlSocket, dataHost, dataPort):
 	dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	dataSocket.connect((dataHost, dataPort))
-	#data = controlSocket.recv(8192).decode('latin-1')
-	#print("S: " + data)
 	return dataSocket
 
 def getDataSocket(controlSocket):
@@ -81,6 +78,7 @@ def getList(controlSocket):
 	print("S: " + controlData)
 	data = dataSocket.recv(8192).decode()
 	print("S: " + data)
+	controlData = controlSocket.recv(8192).decode()
 	dataSocket.close()
 	
 def downloadBinFiles(controlSocket, filePath):
@@ -88,6 +86,7 @@ def downloadBinFiles(controlSocket, filePath):
 	controlSocket.send(message.encode())
 	print("C: " + message)
 	controlData = controlSocket.recv(8192).decode()
+	print("S123: " + controlData)
 	dataSocket = getDataSocket(controlSocket)
 	message = 'RETR {}\r\n'.format(filePath)
 	controlSocket.send(message.encode())
