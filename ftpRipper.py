@@ -2,12 +2,11 @@ from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import Completer, Completion
-from prompt_toolkit.styles import style_from_dict
-from prompt_toolkit.token import Token
 from fuzzyfinder import fuzzyfinder
 import ftplib
 import sys
 import os
+import socket
 
 global connected
 global runOnServer
@@ -25,31 +24,6 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-
-
-def get_bottom_toolbar_tokens(cli):
-    global runOnServer
-    if runOnServer:
-        return [(Token.Toolbar, 'Server Mode')]
-    return [(Token.Toolbar, 'Client Mode')]
-
-
-style = style_from_dict({
-    Token.Toolbar: '#ffffff bg:#333333',
-    Token.RPrompt: 'bg:#ff0066 #ffffff',
-})
-
-def get_rprompt_tokens(cli):
-    global runOnServer
-    if runOnServer:
-        return [
-            (Token, ' '),
-            (Token.RPrompt, '<server>'),
-        ]
-    return [
-        (Token, ' '),
-        (Token.RPrompt, '<client>'),
-    ]
 
 
 class mainCompleter(Completer):
@@ -259,15 +233,11 @@ def userLogin():
 
 
 while 1:  # Main program loop
-
     while connected:
         userInput = prompt(u'>',
                             history=FileHistory('history.txt'),
                             auto_suggest=AutoSuggestFromHistory(),
                             completer=mainCompleter(),
-                            get_bottom_toolbar_tokens=get_bottom_toolbar_tokens,
-                            style=style,
-                            get_rprompt_tokens=get_rprompt_tokens
                             )
         if len(userInput) > 0:
             command = userInput.split()[0]
