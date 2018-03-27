@@ -1,38 +1,51 @@
-from prompt_toolkit import prompt
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+#!/usr/bin/env python
+from __future__ import unicode_literals
+
+from prompt_toolkit.application import Application
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window, Align, Float, FloatContainer
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.completion import Completer, Completion
 from fuzzyfinder import fuzzyfinder
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.controls import FormattedTextControl
+from prompt_toolkit.widgets import TextArea, SearchToolbar
+from prompt_toolkit.layout.dimension import LayoutDimension as D
 import ftplib
+import prompt_toolkit
 import sys
 import os
 import socket
 
+global controlSocket
 global connected
 global runOnServer
+tab = "    "
 connected = False
 runOnServer = True
 
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+def get_statusbar_text():
+    if runOnServer:
+        return [
+            ('class:title', ' Server Mode...'),
+            ('class:title', ' (Press [Ctrl-Q] to quit.)'),
+            ('class:title', ' (Press [Ctrl-S] to toggle client and server mode)'),
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+        ]
+    if not runOnServer:
+        return [
+            ('class:title', ' Client Mode...'),
+            ('class:title', ' (Press [Ctrl-Q] to quit.)'),
 
+        ]
 
 class mainCompleter(Completer):
     def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor(WORD=False)
         currentLine = document.current_line
-
-
-
         if (" " in currentLine):
             options=[]
         if(currentLine[0:1]=='!'):
@@ -50,118 +63,180 @@ class mainCompleter(Completer):
         for m in matches:
             yield Completion(m, start_position=-len(word_before_cursor))
 
-def osls(params):
-    print(os.getcwd())
-
 def ll(params):
     FileStreem = []
     ftp.dir(FileStreem.append)
+    outputLine = ""
     for line in FileStreem:
-        print("", line)
+        outputLine+=line +"\n"
+    printSystemOuput(outputLine)
 
 
 def ls(params):
-    for file in ftp.nlst():
-        print(file, end='\t')
-    print()
+    dataSocket = getDataSocket()
+    message = 'LIST\r\n'
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
+    data = dataSocket.recv(8192).decode()
+    printSystemOuput("S: " + data)
+    controlData = controlSocket.recv(8192).decode()
+    dataSocket.close()
+
+def getDataSocket():
+	dataHost, dataPort = getPortNumber()
+	dataSocket = setupDataConnection(dataHost, dataPort)
+	return dataSocket
+
+
+def getPortNumber():
+    message = 'PASV\r\n'
+    controlSocket.send(message.encode())
+    printResponceOutput("C: " + message)
+    data = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + data)
+    data = data[data.find('(') + 1:data.find(')')]
+    data = data.split(",")
+    dataHost = '.'.join(data[0:4])
+    dataPort = data[-2:]
+    dataPort = (int(dataPort[0]) * 256) + int(dataPort[1])
+    return (dataHost, dataPort)
+
+
+def setupDataConnection(dataHost, dataPort):
+    dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    dataSocket.connect((dataHost, dataPort))
+    return dataSocket
 
 
 def cd(params):
-    try:
-        ftp.cwd(params[0])
-    except Exception as e:
-        print("Failed to change directory " + str(e))
-
+    message = ('CWD {}\r\n'.format(params[0]))
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
 
 def pwd(params):
-    print(ftp.pwd())
+    message = ('PWD \r\n')
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printSystemOuput("S: " + controlData)
 
 
 def rm(params):
-    try:
-        ftp.delete(params[0])
-    except Exception as e:
-        print(bcolors.WARNING+"Could not delete " + str(e)+bcolors.ENDC)
-
+    message = ('RMD {}\r\n'.format(params[0]))
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput ("S: " + controlData)
 
 def mkdir(params):
-    ftp.mkd(params[0])
-
+    if params[0]=="":
+        printResponceOutput("No folder name spesified")
+        return
+    message = ('MKD {}\r\n'.format(params[0]))
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
 
 def help(params):
-    print("All possible commands are:")
+    printSystemOuput("All possible commands are:")
     for command in runOptions.items():
         if (len(command[0]) < 4):
-            print(command[0] + "\t\t" + command[1][1])
+            printSystemOuput(command[0] + "\t\t" + command[1][1])
             continue
-        print(command[0] + "\t" + command[1][1])
-
+        printSystemOuput(command[0] + "\t" + command[1][1])
 
 def close(params):
     ftp.quit()
     global connected
     connected = False
     result = input(
-        bcolors.WARNING + bcolors.BOLD + "connection to the server has been closed. Do you want to make a new connection (Y/n)" + bcolors.ENDC)
+        "connection to the server has been closed. Do you want to make a new connection (Y/n)")
     if result == "" or result == "Y" or result == "y":
         return
     sys.exit()
 
 def push(params):
-    file = params[0]
-    ext = os.path.splitext(file)[1]
-    try:
-        if ext in (".txt", ".htm", ".html"):
-            ftp.storlines("STOR " + file, open(file))
-        else:
-            ftp.storbinary("STOR " + file, open(file, "rb"), 1024)
-        print(bcolors.OKGREEN+"Upload Successful!"+bcolors.ENDC)
-    except Exception as e:
-        print(bcolors.FAIL+"Upload failed with error " + str(e) + bcolors.ENDC)
+    message = 'TYPE I\r\n'
+    controlSocket.send(message.encode())
+    printResponceOutput("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    dataSocket = getDataSocket()
+    message = 'STOR {}\r\n'.format(params[1])
+    controlSocket.send(message.encode())
+    printResponceOutput("S: " + controlSocket.recv(8192).decode())
+
+    file = open('{}'.format(params[0]), 'rb')
+    reading = file.read(8192)
+
+    while reading:
+        dataSocket.send(reading)
+        reading = file.read(8192)
+    printSystemOuput("File upload complete")
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
+    file.close()
+    dataSocket.close()
+
 
 def get(params):
-    filename=params[0]
-    try:
-        print("Retrieving file...")
-        ftp.retrbinary("RETR " + filename ,open(filename, 'wb').write)
-        print(bcolors.OKGREEN+"File retrieved successfully"+bcolors.ENDC)
-    except Exception as e:
-        print (bcolors.FAIL+"Error occured when getting File: " +str(e)+bcolors.ENDC)
+    message = 'TYPE I\r\n'
+    controlSocket.send(message.encode())
+    printResponceOutput("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
+    dataSocket = getDataSocket(controlSocket)
+    message = 'RETR {}\r\n'.format(params[0])
+    controlSocket.send(message.encode())
+    printResponceOutput("S: " + controlSocket.recv(8192).decode())
+
+    file_data = dataSocket.recv(8192)
+    f = open("text.txt", 'wb')
+
+    while file_data:
+        f.write(file_data)
+        file_data = dataSocket.recv(8192)
+    printSystemOuput("File download complete")
+    printResponceOutput("S" + controlSocket.recv(8192).decode())
 
 def logout(params):
-    ftp.quit()
-    global connected
-    connected = False
-    print(bcolors.WARNING + "Your session has been closed" + bcolors.ENDC)
-
+    message = 'QUIT\r\n'
+    controlSocket.send(message.encode())
+    printResponceOutput ("C: " + message)
+    controlData = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + controlData)
 
 def osCommands(userInput):
 
     def oscd(params):
-        print(params)
+        printSystemOuput(params)
         os.chdir(params[0])
 
     def ospwd(params):
-        print(os.getcwd())
+        printSystemOuput(os.getcwd())
 
     def osls(params):
-        if len(params)==0: #if the user did not spesify a path of files to print, use current directory
+        if len(params)==0: #if the user did not spesify a path of files to printSystemOuput, use current directory
             path=os.getcwd()
         else:
             path=params[0]
-        print(path)
         fileList = os.listdir(path)
+        outPut = ""
         for file in fileList:
-            print(file, end="\t")
-        print()
+            outPut += file + tab
+        printSystemOuput(outPut)
 
     def oshelp(params):
-        print("All possible commands for system calls (defined by !) are:")
+        printSystemOuput("All possible commands for system calls (defined by !) are:")
         for command in osOptions.items():
             if (len(command[0]) < 4):
-                print(command[0] + "\t\t" + command[1][1])
+                printSystemOuput(command[0] + "\t\t" + command[1][1])
                 continue
-            print(command[0] + "\t" + command[1][1])
+            printSystemOuput(command[0] + "\t" + command[1][1])
 
     global osOptions
     osOptions = {
@@ -179,7 +254,7 @@ def osCommands(userInput):
         if command in osOptions:
             osOptions[command][0](params)
         else:
-            print(bcolors.WARNING + "Command: '" + command + "' not found. Run 'help' to view all posible commands" + bcolors.ENDC)
+            printSystemOuput("Command: '" + command + "' not found. Run 'help' to view all posible commands")
 
 
 runOptions = {
@@ -199,55 +274,189 @@ runOptions = {
 
 def userLogin():
     server = False
-    global ftp
+    global controlSocket
     while not server:
         try:
             serverAddress = input("ServerAddress: ")
             if serverAddress == "":
-                print(bcolors.WARNING+"Please enter a server address"+bcolors.ENDC)
+                print("Please enter a server address")
                 continue
-            ftp = ftplib.FTP(serverAddress)
-            print(bcolors.OKGREEN+ "Connected to: " + serverAddress+bcolors.ENDC)
+            controlSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            controlSocket.connect((serverAddress, 21))
+            print("Socket established")
+            print("Connected to: " + serverAddress)
             server = True
         except Exception as e:
-            print(bcolors.FAIL+"Could not connect to the server " + str(e) +bcolors.ENDC)
+            print("Could not connect to the server " + str(e))
 
-    login = False
-    while not login:
-        try:
-            username = input("Username: ")
-            password = input("Password: ")
-            if username == "" and password == "":
-                username = "anonymous"
-                password = "anonymous@"
-            ftp.login(username, password)
-            login = True
-        except Exception as e:
-            print(bcolors.FAIL+ "Could not log into the server " + str(e) +bcolors.ENDC)
-    if server and login:
-        print(bcolors.OKGREEN+ bcolors.UNDERLINE+ "Logged into server: %s" % (serverAddress)+bcolors.ENDC)
-        print(ftp.getwelcome())
-        print(bcolors.OKBLUE+"Entered FTP shell"+bcolors.ENDC)
-        global connected
-        connected = True
+    data = controlSocket.recv(8192).decode()
+    printResponceOutput("S: " + data)
+    if data.startswith("220"):
+        login = False
+        while not login:
+            try:
+                username = input("Username: ")
+                password = input("Password: ")
+                if username == "" and password == "":
+                    username = "anonymous"
+                    password = "anonymous@"
+
+                message = 'USER {}\r\n'.format(username)
+                controlSocket.send(message.encode())
+                printResponceOutput("C: " + message)
+                data = controlSocket.recv(8192).decode()
+                printResponceOutput("S: " + data)
+                # if data.startswith("331") or data.startswith("332"):
+                message = 'PASS {}\r\n'.format(password)
+                controlSocket.send(message.encode())
+                printResponceOutput("C: " + message)
+                data = controlSocket.recv(8192).decode()
+                printResponceOutput("S: " + data)
+                if data.startswith("230"):
+                    print("Successfully logged into ftp server :)")
+                if data.startswith("530"):
+                    print("Login failed")
+
+                login = True
+            except Exception as e:
+                print( "Could not log into the server " + str(e))
+        if server and login:
+            print("Logged into server: %s" % (serverAddress))
+            print("Entered FTP shell")
+            global connected
+            connected = True
+
+def runCommand(_):
+    splitUserInput = _.text.splitlines()
+    userInput = splitUserInput[len(splitUserInput)-1]
+    if userInput[0]!="!":
+        runOnServer = True
+        printResponceOutput("Server Command: " + userInput)
+
+    if userInput[0]=="!":
+        runOnServer = False
+        printResponceOutput("Client Command: " + userInput)
+    if len(userInput) > 0:
+        command = userInput.split()[0]
+        if len(userInput.split()) > 1:
+            params = userInput.split()[1:len(userInput)]
+        else:
+            params = []
+        if command in runOptions:
+            runOptions[command][0](params)
+        else:
+            printResponceOutput(
+                        "Command: '" + command + "' not found. Run 'help' to view all posible commands")
+    left_buffer.insert_line_below()
+
+left_buffer = Buffer(accept_handler=runCommand,
+                     multiline=False,
+                     completer=mainCompleter(),
+                     history=FileHistory('history.txt'),
+                     complete_while_typing=True
+                     )
+
+left_window = Window(BufferControl(buffer=left_buffer))
+
+responseOutput = TextArea(
+    text="FTP Communication Responses(and commands)",
+    scrollbar=True,
+    line_numbers=True,
+    )
+
+systemOutput = TextArea(
+    text="System Output",
+    scrollbar=True,
+    line_numbers=True,
+    )
+
+def printResponceOutput(text):
+    currentText=responseOutput.document.text
+    newText = currentText+"\n"+text
+    tempDoc = prompt_toolkit.document.Document(text=newText)
+    responseOutput.document = tempDoc
 
 
-while 1:  # Main program loop
-    while connected:
-        userInput = prompt(u'>',
-                            history=FileHistory('history.txt'),
-                            auto_suggest=AutoSuggestFromHistory(),
-                            completer=mainCompleter(),
-                            )
-        if len(userInput) > 0:
-            command = userInput.split()[0]
-            if len(userInput.split()) > 1:
-                params = userInput.split()[1:len(userInput)]
-            else:
-                params = []
-            if command in runOptions:
-                runOptions[command][0](params)
-            else:
-                print(bcolors.WARNING+"Command: '" + command + "' not found. Run 'help' to view all posible commands"+bcolors.ENDC)
-    if not connected:
-        userLogin()
+def printSystemOuput(text):
+    currentText=systemOutput.document.text
+    newText = currentText+"\n"+text
+    tempDoc = prompt_toolkit.document.Document(text=newText)
+    systemOutput.document = tempDoc
+
+body = FloatContainer(
+    content=VSplit([
+    left_window,
+
+    # A vertical line in the middle. We explicitly specify the width, to make
+    # sure that the layout engine will not try to divide the whole width by
+    # three for all these windows.
+    Window(width=1, char='|', style='class:line'),
+
+    # Display the Result buffer on the right.
+        responseOutput,
+        systemOutput,
+]),
+    floats=[
+        Float(xcursor=True,
+              ycursor=True,
+              content=CompletionsMenu(max_height=16, scroll_offset=1))
+    ]
+)
+
+root_container = HSplit([
+    # The titlebar.
+    Window(content=FormattedTextControl(
+        get_statusbar_text),
+        height=D.exact(1),
+        style='class:status'),
+
+    # Horizontal separator.
+    Window(height=1, char='-', style='class:line'),
+
+    # The 'body', like defined above.
+    body,
+])
+
+kb = KeyBindings()
+
+@kb.add('c-c', eager=True)
+@kb.add('c-q', eager=True)
+def _(event):
+    event.app.set_result(None)
+
+@kb.add('c-s', eager=True)
+def _(event):
+    addModifier()
+
+
+def addModifier():
+    currentBuffer = left_buffer.text
+    splitBuffer = currentBuffer.splitlines()
+    newCommand = "! " + splitBuffer[len(splitBuffer)-1]
+    newBuffer = ""
+    for index, command in enumerate(splitBuffer):
+        if index!=len(splitBuffer)-1:
+            newBuffer +=command + "\n"
+        if index==len(splitBuffer)-1:
+            newBuffer += newCommand
+    left_buffer.text=newBuffer
+
+
+def default_buffer_changed(_):
+    pass
+    # right_buffer.text += "1"
+
+application = Application(
+    layout=Layout(root_container, focused_element=left_window),
+    key_bindings=kb,
+    mouse_support=True,
+    full_screen=True)
+
+
+def run():
+    application.run()
+
+
+if __name__ == '__main__':
+    userLogin()
+    run()
