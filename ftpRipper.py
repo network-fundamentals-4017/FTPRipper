@@ -14,7 +14,6 @@ from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.widgets import TextArea, SearchToolbar
 from prompt_toolkit.layout.dimension import LayoutDimension as D
-import ftplib
 import prompt_toolkit
 import sys
 import os

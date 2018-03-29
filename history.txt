@@ -1744,3 +1744,146 @@
 +cd upload
 +! ls
 +
+
+# 2018-03-27 22:27:33.825878
++ls
++
+
+# 2018-03-27 22:27:45.616241
++ls
++cd upload
++
+
+# 2018-03-27 22:27:56.884600
++ls
++cd upload
++ls
++
+
+# 2018-03-27 22:28:01.320365
++ls
++cd upload
++ls
++pwd
++
+
+# 2018-03-27 22:28:04.684269
++ls
++cd upload
++ls
++pwd
++cd ..
++
+
+# 2018-03-27 22:28:09.419059
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++
+
+# 2018-03-27 22:28:35.621949
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++ls
++
+
+# 2018-03-27 22:28:37.542731
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++ls
++ls
++
+
+# 2018-03-27 22:28:38.963971
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++ls
++ls
++ls
++
+
+# 2018-03-27 22:28:41.357817
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++ls
++ls
++ls
++ls
++
+
+# 2018-03-27 22:28:42.924013
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++ls
++ls
++ls
++ls
++ls
++
+
+# 2018-03-27 22:28:58.323602
++ls
++cd upload
++ls
++pwd
++cd ..
++! ls
++
+
+# 2018-03-27 22:29:37.265240
++ls
++cd upload
++ls
++pwd
++
++pwdpwd
++pdw
++pwd
++pwd
++pwd
++pwd
++pwd
++! help
++
++
+
+# 2018-03-27 22:29:40.600211
++ls
++cd upload
++ls
++pwd
++
++pwdpwd
++pdw
++pwd
++pwd
++pwd
++pwd
++pwd
++! help
++help
++
++
