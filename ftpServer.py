@@ -1,103 +1,289 @@
-import socket, os
+import socket, os, threading
 
-def Main():
-    print(socket.gethostname())
-    host = socket.gethostbyname(socket.gethostname())
-    port = 21
+class FTPServer():
+    def __init__(self, controlConnection, ipAddress):
+        self.controlConnection = controlConnection
+        self.ipAddress = ipAddress
+        self.dataSocket = None
+        self.type = None
 
-    controlSocket = createControlSocket(host, port)
-    print("Command:", controlSocket.getsockname())
-    controlSocket.listen(1)
+        self.run()
+    def run(self):
+        self.USER()
+        while True:
+            data = self.controlConnection.recv(1024).decode()
+            if not data:
+                break
 
-    controlConnection, controlAddress = controlSocket.accept()
-    USER(controlConnection)
-    while True:
-        data = controlConnection.recv(1024).decode()
-        if not data:
-            break
+            command = self.getCommnad(data)
+            info = self.getInfo(data)
+            if command=="PASV":
+                self.PASV()
+            elif command=="LIST":
+                self.LIST()
+            elif command=="PWD ":
+                self.PWD()
+            elif command=="CWD ":
+                self.CWD(info)
+            elif command=="TYPE":
+                self.TYPE(info)
+            elif command=="RETR":
+                self.RETR(info)
+            elif command=="STOR":
+                self.STOR(info)
+            elif command=="NOOP":
+                self.NOOP()
+            elif command=="QUIT":
+                self.QUIT()
+            elif command=="RMD ":
+                self.RMD(info)
+            elif command=="MKD ":
+                self.MKD(info)
+            elif command=="DELE":
+                self.DELE(info)
+            else:
+                self.UNKNOWN()
 
-        command = getCommnad(data)
-        info = getInfo(data)
-        if command=="PASV":
-            dataSocket = PASV(controlConnection)
-        elif command=="LIST":
-            LIST(controlConnection, dataSocket)
 
+    def USER(self):
+        message = "220 Server socket established\r\n"
+        print(message)
+        self.controlConnection.send(message.encode())
+        print(message)
+        data = self.controlConnection.recv(1024).decode()
+        username = data[5:].strip()
+        if self.checkUserExists(username):
+            self.PASS(username)
+        else:
+            message = "530 Unknown user\r\n"
+            self.controlConnection.send(message.encode())
+
+    def PASS(self, username):
+        message = "331 Password required\r\n"
+        self.controlConnection.send(message.encode())
+        data = self.controlConnection.recv(1024).decode()
+        password = data[5:].strip()
+        if self.checkPassword(username, password):
+            message = "230 Login successful\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            message = "530 Incorrect Password\r\n"
+            self.controlConnection.send(message.encode())
+
+    def checkUserExists(self, username):
+        return True
+
+    def checkPassword(self, username, password):
+        return True
+
+    def getCommnad(self, data):
+        command = data[:4]
+        return command
+
+    def getInfo(self, data):
+        info = data[data.find(' ')+1:data.find('\r\n')]
+        return info
+
+    def PASV(self):
+        address = socket.gethostbyname(socket.gethostname())
+        address = address.split(".")
+        address = ','.join(address)
+        address = "("+address+",30,60)"
+        message = "227 Passive Mode " + address +"\r\n"
+        self.getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)
+        self.controlConnection.send(message.encode())
+        print("Passive data connection set up ")
+
+    def getDataSocket(self, host, port):
+        self.dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.dataSocket.bind((host, port))
+        self.dataSocket.listen(1)
+
+    def LIST(self):
+        message = "150 Here comes the directory listing...\r\n"
+        self.controlConnection.send(message.encode())
+        dataConnection, address = self.dataSocket.accept()
+        listing = ""
+        # detect the current working directory
+        path = os.getcwd()
+
+        # read the entries
+        with os.scandir(path) as listOfEntries:
+            for entry in listOfEntries:
+                # print all entries that are files
+                if entry.is_file():
+                    listing = listing + '\t' + entry.name
+        print(listing)
+        dataConnection.send(listing.encode())
+        dataConnection.close()
+        message = "226 Listing transfer complete.\r\n"
+        self.controlConnection.send(message.encode())
+        self.dataSocket.close()
+        self.dataSocket = None
+        return
+
+    def PWD(self):
+        pwd = os.getcwd()
+        message = "257 " + pwd + " is the current working directory.\r\n"
+        self.controlConnection.send(message.encode())
+
+    def CWD(self, path):
+         if os.path.exists(path):
+             os.chdir(path)
+             message = "250 Working directory changed.\r\n"
+             self.controlConnection.send(message.encode())
+         else:
+             message = "550 The path name specified could not be found.\r\n"
+             self.controlConnection.send(message.encode())
+
+    def RMD(self, dir):
+        if os.path.exists(dir):
+            print("true")
+            os.rmdir(dir)
+            message = "250 Directory removed.\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            message = "550 Directory does not exist.\r\n"
+            self.controlConnection.send(message.encode())
+
+    def MKD(self, newDir):
+        if os.path.exists(newDir):
+            message="521 Directory already exists.\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            os.mkdir(newDir)
+            message="257 Directory created.\r\n"
+            self.controlConnection.send(message.encode())
+
+    def DELE(self, pathName):
+        if os.path.exists(pathName):
+            os.remove(pathName)
+            message = "250 File deleted.\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            message = "450 Requested file could not be deleted.\r\n"
+            self.controlConnection.send(message.encode())
+
+    def TYPE(self, type):
+        if type=='A':
+            message = "200 ascii mode activated.\r\n"
+            self.controlConnection.send(message.encode())
+            self.type='A'
+        elif type=='I':
+            message = "200 binary mode activated.\r\n"
+            self.controlConnection.send(message.encode())
+            self.type='I'
+        else:
+            print("no type found")
+
+    def RETR(self, filename):
+        message = "150 Opening data connection"
+        self.controlConnection.send(message.encode())
+        dataConnection, address = self.dataSocket.accept()
+
+        if self.type=='A':
+            file = open(filename, 'r')
+            fileData = file.read(8192)
+
+            while fileData:
+                print("reading file")
+                dataConnection.send((fileData+'\r\n').encode())
+                fileData = file.read(8192)
+
+            file.close()
+            dataConnection.close()
+            message = "226 file transfer completed successfully.\r\n"
+            self.controlConnection.send(message.encode())
+
+        elif self.type=='I':
+            file = open(filename, 'rb')
+            fileData = file.read(8192)
+
+            while fileData:
+                print("reading file")
+                dataConnection.send(fileData)
+                fileData = file.read(8192)
+
+        file.close()
+        dataConnection.close()
+        self.dataSocket.close()
+        self.dataSocket = None
+        message = "226 file transfer completed successfully.\r\n"
+        self.controlConnection.send(message.encode())
+
+    def STOR(self, filename):
+        message = "150 Opening data connection"
+        self.controlConnection.send(message.encode())
+
+        dataConnection, address = self.dataSocket.accept()
+
+        if self.type=='A':
+            file = open(filename, 'w')
+            fileData = self.dataSocket.recv(8192).decode()
+
+            while fileData:
+                print("writing file - A")
+                file.write(fileData)
+                fileData = self.dataSocket.recv(8192).decode()
+
+            file.close()
+            dataConnection.close()
+            self.dataSocket.close()
+            self.dataSocket = None
+            message = "226 file transfer completed successfully.\r\n"
+            self.controlConnection.send(message.encode())
+
+        elif self.type=='I':
+            file = open(filename, 'wb')
+            fileData = dataConnection.recv(8192)
+
+            while fileData:
+                print("writing file - I")
+                file.write(fileData)
+                print("written stuff")
+                fileData = dataConnection.recv(8192)
+
+
+            print("after write")
+            file.close()
+            message = "226 file transfer completed successfully.\r\n"
+            self.controlConnection.send(message.encode())
+            dataConnection.close()
+            self.dataSocket.close()
+            self.dataSocket = None
+            print("sent message")
+
+
+    def NOOP(self):
+        message = "200 NOOP OK\r\n"
+        self.controlConnection.send(message.encode())
+    def QUIT(self):
+        message = "221 FTP connection terminated.\r\n"
+        self.controlConnection.send(message.encode())
+        self.controlConnection.close()
+
+    def UNKNOWN(self):
+        message = "202 Command not implemented.\r\n"
+        self.controlConnection.send(message.encode())
 def createControlSocket(host, port):
     controlSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     controlSocket.bind((host, port))
     return controlSocket
 
-def USER(controlConnection):
-    message = "220 Server socket established"
-    controlConnection.send(message.encode())
-    print(message)
-    data = controlConnection.recv(1024).decode()
-    username = data[5:].strip()
-    if checkUserExists(username):
-        PASS(controlConnection, username)
-    else:
-        message = "530 Unknown user"
-        controlConnection.send(message.encode())
+def Main():
+    host = socket.gethostbyname(socket.gethostname())
+    port = 21
 
-def PASS(controlConnection, username):
-    message = "331 Password required"
-    controlConnection.send(message.encode())
-    data = controlConnection.recv(1024).decode()
-    password = data[5:].strip()
-    if checkPassword(username, password):
-        message = "230 Login successful"
-        controlConnection.send(message.encode())
-    else:
-        message = "530 Incorrect Password"
+    print("FTP Server started")
 
-def checkUserExists(username):
-    return True
+    print("Command:", host)
 
-def checkPassword(username, password):
-    return True
+    controlSocket = createControlSocket(host, port)
 
-def getCommnad(data):
-    command = data[:4]
-    return command
+    controlSocket.listen(1)
+    controlConnection, controlAddress = controlSocket.accept()
+    FTPServer(controlConnection, controlAddress)
 
-def getInfo(data):
-    info = data[data.find(' ')+1:]
-    return info
-
-def PASV(controlConnection):
-    address = socket.gethostbyname(socket.gethostname())
-    address = address.split(".")
-    address = ','.join(address)
-    address = "("+address+",30,60)"
-    message = "227 Passive Mode " + address
-    dataSocket = getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)
-    controlConnection.send(message.encode())
-    print("Passive data connection set up")
-    return dataSocket
-
-def getDataSocket(host, port):
-    dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dataSocket.bind((host, port))
-    dataSocket.listen(1)
-    return dataSocket
-
-def LIST(controlConnection, dataSocket):
-    message = "150 Here comes the directory listing..."
-    controlConnection.send(message.encode())
-    dataConnection, address = dataSocket.accept()
-    listing = ""
-    # detect the current working directory
-    path = os.getcwd()
-
-    # read the entries
-    with os.scandir(path) as listOfEntries:
-        for entry in listOfEntries:
-            # print all entries that are files
-            if entry.is_file():
-                listing = listing + '\t' + entry.name
-    print(listing)
-    dataConnection.send(listing.encode())
 
 if __name__ == '__main__':
     Main()

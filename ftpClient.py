@@ -2,7 +2,7 @@ import socket
 import sys
 
 def Main():
-	host = '146.141.125.39'
+	host = '10.0.0.6'
 	port = 21
 
 	print("Begin FTP Client...")
@@ -20,11 +20,15 @@ def Main():
 	if data.startswith("220"):
 		userLogin(controlSocket)
 		getList(controlSocket)
-		#downloadBinFiles(controlSocket,'files/test.txt')
-		#changeWorkingDirectory(controlSocket, 'files')	
+		#changeWorkingDirectory(controlSocket, 'files/another')
+		#downloadBinFiles(controlSocket,'files/doc.txt')
+		#deleteFile(controlSocket, 'files/doc.txt')
+		#printDirectory(controlSocket)
 		#removeDirectory(controlSocket, 'newDir')
+		#makeDirectory(controlSocket, 'newDir')
 		#getList(controlSocket)
-		#uploadFile(controlSocket,'files/test2.txt','test2.txt')
+		uploadFile(controlSocket,'files/test2.txt','test2.txt')
+		#printDirectory(controlSocket)
 		#quit(controlSocket)
 	controlSocket.close()
 
@@ -78,6 +82,7 @@ def getList(controlSocket):
 	data = dataSocket.recv(8192).decode()
 	print("S: " + data)
 	controlData = controlSocket.recv(8192).decode()
+	print("S: " + controlData)
 	dataSocket.close()
 	
 def downloadBinFiles(controlSocket, filePath):
@@ -85,7 +90,7 @@ def downloadBinFiles(controlSocket, filePath):
 	controlSocket.send(message.encode())
 	print("C: " + message)
 	controlData = controlSocket.recv(8192).decode()
-	print("S123: " + controlData)
+	print("S: " + controlData)
 	dataSocket = getDataSocket(controlSocket)
 	message = 'RETR {}\r\n'.format(filePath)
 	controlSocket.send(message.encode())
@@ -98,7 +103,7 @@ def downloadBinFiles(controlSocket, filePath):
 		f.write(file_data)
 		file_data = dataSocket.recv(8192)
 	print("File download complete")
-	print("S" + controlSocket.recv(8192).decode())
+	print("S: " + controlSocket.recv(8192).decode())
 	
 def changeWorkingDirectory(controlSocket, path):
 	message = ('CWD {}\r\n'.format(path))
@@ -135,6 +140,13 @@ def removeDirectory(controlSocket, name):
 	controlData = controlSocket.recv(8192).decode()
 	print("S: " + controlData)
 
+def deleteFile(controlSocket, pathName):
+	message = ('DELE {}\r\n'.format(pathName))
+	controlSocket.send(message.encode())
+	print("C: " + message)
+	controlData = controlSocket.recv(8192).decode()
+	print("S: " + controlData)
+
 def uploadFile(controlSocket,destination, fileName):
 	message = 'TYPE I\r\n'
 	controlSocket.send(message.encode())
@@ -153,6 +165,8 @@ def uploadFile(controlSocket,destination, fileName):
 		reading = file.read(8192)
 	print("File upload complete")
 	file.close()
+	controlData = controlSocket.recv(8192).decode()
+	print("S: " + controlData)
 	dataSocket.close()
 	
 def quit(controlSocket):
