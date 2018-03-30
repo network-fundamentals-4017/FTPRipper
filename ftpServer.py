@@ -11,11 +11,11 @@ class FTPServer():
     def run(self):
         self.USER()
         while True:
-            data = self.controlConnection.recv(1024).decode()
+            data = self.controlConnection.recv(8192).decode()
             if not data:
                 break
 
-            command = self.getCommnad(data)
+            command = self.getCommnand(data)
             info = self.getInfo(data)
             if command=="PASV":
                 self.PASV()
@@ -41,6 +41,10 @@ class FTPServer():
                 self.MKD(info)
             elif command=="DELE":
                 self.DELE(info)
+            elif command=="PORT":
+                self.PORT(info)
+            elif command=="SYST":
+                self.SYST()
             else:
                 self.UNKNOWN()
 
@@ -76,7 +80,7 @@ class FTPServer():
     def checkPassword(self, username, password):
         return True
 
-    def getCommnad(self, data):
+    def getCommnand(self, data):
         command = data[:4]
         return command
 
@@ -93,6 +97,16 @@ class FTPServer():
         self.getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)
         self.controlConnection.send(message.encode())
         print("Passive data connection set up ")
+
+    def PORT(self, data):
+        print("start port")
+        data = data.split(",")
+        dataHost = '.'.join(data[0:4])
+        dataPort = data[-2:]
+        dataPort = (int(dataPort[0]) * 256) + int(dataPort[1])
+        self.getDataSocket(dataHost, dataPort)
+        message = "200 PORT command successful.\r\n"
+        self.controlConnection.send(message.encode())
 
     def getDataSocket(self, host, port):
         self.dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -253,6 +267,9 @@ class FTPServer():
             self.dataSocket = None
             print("sent message")
 
+    def SYST(self):
+        message = "215 " + os.name + ".\r\n"
+        self.controlConnection.send(message.encode())
 
     def NOOP(self):
         message = "200 NOOP OK\r\n"
