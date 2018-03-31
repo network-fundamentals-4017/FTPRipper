@@ -32,7 +32,7 @@ def Main():
             # removeDirectory(controlSocket, 'newDir')
             # makeDirectory(controlSocket, 'newDir')
             # getList(controlSocket)
-            uploadFile(controlSocket, 'files/test2.txt', 'test2.txt')
+            uploadFile(controlSocket, 'test2.txt', 'files/test2.txt')
     # printDirectory(controlSocket)
     # quit(controlSocket)
     controlSocket.close()
@@ -197,7 +197,7 @@ def deleteFile(controlSocket, pathName):
     print("S: " + controlData)
 
 
-def uploadFile(controlSocket, destination, fileName):
+def uploadFile(controlSocket, fileName, destination):
     message = 'TYPE I\r\n'
     controlSocket.send(message.encode())
     print("C: " + message)

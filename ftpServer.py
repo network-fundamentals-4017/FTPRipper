@@ -366,7 +366,7 @@ def Main():
     while True:
         controlSocket.listen(1)
         controlConnection, controlAddress = controlSocket.accept()
-        print("connection started")
+        print("New thread created.")
         thread = FTPServer(controlConnection, controlAddress)
         thread.start()
 
