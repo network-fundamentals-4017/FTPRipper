@@ -1,52 +1,62 @@
 import socket, os, threading
 
-class FTPServer():
+class FTPServer(threading.Thread):
     def __init__(self, controlConnection, ipAddress):
+        threading.Thread.__init__(self)
         self.controlConnection = controlConnection
         self.ipAddress = ipAddress
         self.dataSocket = None
         self.type = None
+        self.mode = 'S'
+        self.stru = 'F'
+        self.hasPort = False
+        self.clientLoggedIn=False
 
-        self.run()
     def run(self):
         self.USER()
-        while True:
-            data = self.controlConnection.recv(8192).decode()
-            if not data:
-                break
 
-            command = self.getCommnand(data)
-            info = self.getInfo(data)
-            if command=="PASV":
-                self.PASV()
-            elif command=="LIST":
-                self.LIST()
-            elif command=="PWD ":
-                self.PWD()
-            elif command=="CWD ":
-                self.CWD(info)
-            elif command=="TYPE":
-                self.TYPE(info)
-            elif command=="RETR":
-                self.RETR(info)
-            elif command=="STOR":
-                self.STOR(info)
-            elif command=="NOOP":
-                self.NOOP()
-            elif command=="QUIT":
-                self.QUIT()
-            elif command=="RMD ":
-                self.RMD(info)
-            elif command=="MKD ":
-                self.MKD(info)
-            elif command=="DELE":
-                self.DELE(info)
-            elif command=="PORT":
-                self.PORT(info)
-            elif command=="SYST":
-                self.SYST()
-            else:
-                self.UNKNOWN()
+        if self.clientLoggedIn==True:
+            while True:
+                data = self.controlConnection.recv(8192).decode()
+                if not data:
+                    break
+
+                command = self.getCommnand(data)
+                info = self.getInfo(data)
+                if command=="PASV":
+                    self.PASV()
+                elif command=="LIST":
+                    self.LIST()
+                elif command=="PWD":
+                    self.PWD()
+                elif command=="CWD":
+                    self.CWD(info)
+                elif command=="TYPE":
+                    self.TYPE(info)
+                elif command=="RETR":
+                    self.RETR(info)
+                elif command=="STOR":
+                    self.STOR(info)
+                elif command=="NOOP":
+                    self.NOOP()
+                elif command=="QUIT":
+                    self.QUIT()
+                elif command=="RMD":
+                    self.RMD(info)
+                elif command=="MKD":
+                    self.MKD(info)
+                elif command=="DELE":
+                    self.DELE(info)
+                elif command=="PORT":
+                    self.PORT(info)
+                elif command=="MODE":
+                    self.MODE(info)
+                elif command=="STRU":
+                    self.STRU(info)
+                elif command=="SYST":
+                    self.SYST()
+                else:
+                    self.UNKNOWN()
 
 
     def USER(self):
@@ -69,19 +79,20 @@ class FTPServer():
         password = data[5:].strip()
         if self.checkPassword(username, password):
             message = "230 Login successful\r\n"
+            self.clientLoggedIn=True
             self.controlConnection.send(message.encode())
         else:
             message = "530 Incorrect Password\r\n"
             self.controlConnection.send(message.encode())
 
     def checkUserExists(self, username):
-        return True
+        return username=="group10"
 
     def checkPassword(self, username, password):
-        return True
+        return password=="osh4ogoo"
 
     def getCommnand(self, data):
-        command = data[:4]
+        command = data[:4].strip()
         return command
 
     def getInfo(self, data):
@@ -107,6 +118,41 @@ class FTPServer():
         self.getDataSocket(dataHost, dataPort)
         message = "200 PORT command successful.\r\n"
         self.controlConnection.send(message.encode())
+        self.hasPort = True
+
+    def MODE(self, data):
+        if data=='S':
+            self.mode='S'
+            message = "200 Transfer mode set to stream.\r\n"
+            self.controlConnection.send(message.encode())
+        elif data=='B':
+            self.mode=='B'
+            message = "200 Transfer mode set to block.\r\n"
+            self.controlConnection.send(message.encode())
+        elif data=='C':
+            self.mode=='C'
+            message = "200 Transfer mode set to compression.\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            message = "500 Unrecognised transfer mode.\r\n"
+            self.controlConnection.send(message.encode())
+
+    def STRU(self, data):
+        if data == 'F':
+            self.stru = 'F'
+            message = "200 Structure set to file.\r\n"
+            self.controlConnection.send(message.encode())
+        elif data == 'R':
+            self.stru == 'R'
+            message = "200 Structure set to record.\r\n"
+            self.controlConnection.send(message.encode())
+        elif data == 'P':
+            self.stru == 'P'
+            message = "200 Structure set to page.\r\n"
+            self.controlConnection.send(message.encode())
+        else:
+            message = "500 Unrecognised structure code.\r\n"
+            self.controlConnection.send(message.encode())
 
     def getDataSocket(self, host, port):
         self.dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -193,7 +239,9 @@ class FTPServer():
     def RETR(self, filename):
         message = "150 Opening data connection"
         self.controlConnection.send(message.encode())
-        dataConnection, address = self.dataSocket.accept()
+
+        if not self.hasPort:
+            dataConnection, address = self.dataSocket.accept()
 
         if self.type=='A':
             file = open(filename, 'r')
@@ -201,11 +249,15 @@ class FTPServer():
 
             while fileData:
                 print("reading file")
-                dataConnection.send((fileData+'\r\n').encode())
+                if not self.hasPort:
+                    dataConnection.send((fileData + '\r\n').encode())
+                else:
+                    self.dataSocket.send((fileData + '\r\n').encode())
                 fileData = file.read(8192)
 
             file.close()
-            dataConnection.close()
+            if not self.hasPort:
+                dataConnection.close()
             message = "226 file transfer completed successfully.\r\n"
             self.controlConnection.send(message.encode())
 
@@ -215,11 +267,15 @@ class FTPServer():
 
             while fileData:
                 print("reading file")
-                dataConnection.send(fileData)
+                if not self.hasPort:
+                    dataConnection.send(fileData)
+                else:
+                    self.dataSocket.send(fileData)
                 fileData = file.read(8192)
 
         file.close()
-        dataConnection.close()
+        if not self.hasPort:
+            dataConnection.close()
         self.dataSocket.close()
         self.dataSocket = None
         message = "226 file transfer completed successfully.\r\n"
@@ -228,20 +284,28 @@ class FTPServer():
     def STOR(self, filename):
         message = "150 Opening data connection"
         self.controlConnection.send(message.encode())
-
-        dataConnection, address = self.dataSocket.accept()
+        if not self.hasPort:
+            dataConnection, address = self.dataSocket.accept()
 
         if self.type=='A':
             file = open(filename, 'w')
-            fileData = self.dataSocket.recv(8192).decode()
+
+            if not self.hasPort:
+                fileData = dataConnection.recv(8192).decode()
+            else:
+                fileData = self.dataSocket.recv(8192).decode()
 
             while fileData:
                 print("writing file - A")
                 file.write(fileData)
-                fileData = self.dataSocket.recv(8192).decode()
+                if not self.hasPort:
+                    fileData = dataConnection.recv(8192).decode()
+                else:
+                    fileData = self.dataSocket.recv(8192).decode()
 
             file.close()
-            dataConnection.close()
+            if not self.hasPort:
+                dataConnection.close()
             self.dataSocket.close()
             self.dataSocket = None
             message = "226 file transfer completed successfully.\r\n"
@@ -249,23 +313,25 @@ class FTPServer():
 
         elif self.type=='I':
             file = open(filename, 'wb')
-            fileData = dataConnection.recv(8192)
+            if not self.hasPort:
+                fileData = dataConnection.recv(8192)
+            else:
+                fileData = self.dataSocket.recv(8192)
 
             while fileData:
-                print("writing file - I")
                 file.write(fileData)
-                print("written stuff")
-                fileData = dataConnection.recv(8192)
+                if not self.hasPort:
+                    fileData = dataConnection.recv(8192)
+                else:
+                    fileData = self.dataSocket.recv(8192)
 
-
-            print("after write")
             file.close()
             message = "226 file transfer completed successfully.\r\n"
             self.controlConnection.send(message.encode())
-            dataConnection.close()
+            if not self.hasPort:
+                dataConnection.close()
             self.dataSocket.close()
             self.dataSocket = None
-            print("sent message")
 
     def SYST(self):
         message = "215 " + os.name + ".\r\n"
@@ -297,9 +363,12 @@ def Main():
 
     controlSocket = createControlSocket(host, port)
 
-    controlSocket.listen(1)
-    controlConnection, controlAddress = controlSocket.accept()
-    FTPServer(controlConnection, controlAddress)
+    while True:
+        controlSocket.listen(1)
+        controlConnection, controlAddress = controlSocket.accept()
+        print("connection started")
+        thread = FTPServer(controlConnection, controlAddress)
+        thread.start()
 
 
 if __name__ == '__main__':
