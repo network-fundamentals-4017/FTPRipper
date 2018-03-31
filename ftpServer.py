@@ -1,4 +1,4 @@
-import socket, os, threading
+import socket, os, threading, json
 
 class FTPServer(threading.Thread):
     def __init__(self, controlConnection, ipAddress):
@@ -13,7 +13,9 @@ class FTPServer(threading.Thread):
         self.clientLoggedIn=False
 
     def run(self):
-        self.USER()
+
+        while self.clientLoggedIn == False:
+            self.USER()
 
         if self.clientLoggedIn==True:
             while True:
@@ -63,33 +65,48 @@ class FTPServer(threading.Thread):
         message = "220 Server socket established\r\n"
         print(message)
         self.controlConnection.send(message.encode())
-        print(message)
         data = self.controlConnection.recv(1024).decode()
+        print("Username received.")
         username = data[5:].strip()
         if self.checkUserExists(username):
+            print("Username exists.")
             self.PASS(username)
         else:
             message = "530 Unknown user\r\n"
+            print("Username does not exist.")
             self.controlConnection.send(message.encode())
 
     def PASS(self, username):
         message = "331 Password required\r\n"
         self.controlConnection.send(message.encode())
         data = self.controlConnection.recv(1024).decode()
+        print("Password received.")
         password = data[5:].strip()
         if self.checkPassword(username, password):
             message = "230 Login successful\r\n"
+            print("Password accepted.")
             self.clientLoggedIn=True
             self.controlConnection.send(message.encode())
         else:
+            print("Incorrect Password")
             message = "530 Incorrect Password\r\n"
             self.controlConnection.send(message.encode())
 
     def checkUserExists(self, username):
-        return username=="group10"
+        with open("users.txt", 'r') as f:
+            users = json.load(f)
+        f.close()
+        if username in users.keys():
+            return True
+        return False
 
     def checkPassword(self, username, password):
-        return password=="osh4ogoo"
+        with open("users.txt", 'r') as f:
+            users = json.load(f)
+        f.close()
+        if users[username]==password:
+            return True
+        return False
 
     def getCommnand(self, data):
         command = data[:4].strip()
@@ -107,10 +124,10 @@ class FTPServer(threading.Thread):
         message = "227 Passive Mode " + address +"\r\n"
         self.getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)
         self.controlConnection.send(message.encode())
-        print("Passive data connection set up ")
+        print("Passive data connection set up.")
 
     def PORT(self, data):
-        print("start port")
+        print("PORT requested.")
         data = data.split(",")
         dataHost = '.'.join(data[0:4])
         dataPort = data[-2:]
@@ -121,6 +138,7 @@ class FTPServer(threading.Thread):
         self.hasPort = True
 
     def MODE(self, data):
+        print("Mode check.")
         if data=='S':
             self.mode='S'
             message = "200 Transfer mode set to stream.\r\n"
@@ -160,6 +178,7 @@ class FTPServer(threading.Thread):
         self.dataSocket.listen(1)
 
     def LIST(self):
+        print("Directory listing requested.")
         message = "150 Here comes the directory listing...\r\n"
         self.controlConnection.send(message.encode())
         dataConnection, address = self.dataSocket.accept()
@@ -170,11 +189,10 @@ class FTPServer(threading.Thread):
         # read the entries
         with os.scandir(path) as listOfEntries:
             for entry in listOfEntries:
-                # print all entries that are files
-                if entry.is_file():
-                    listing = listing + '\t' + entry.name
-        print(listing)
+                # print all entries that are files:
+                listing = listing + '\t' + entry.name
         dataConnection.send(listing.encode())
+        print("Directory listing sent.")
         dataConnection.close()
         message = "226 Listing transfer complete.\r\n"
         self.controlConnection.send(message.encode())
@@ -183,48 +201,63 @@ class FTPServer(threading.Thread):
         return
 
     def PWD(self):
+        print("Print working directory requested.")
         pwd = os.getcwd()
         message = "257 " + pwd + " is the current working directory.\r\n"
         self.controlConnection.send(message.encode())
+        print("Working directory sent.")
 
     def CWD(self, path):
+         print("Change working directory requested.")
          if os.path.exists(path):
              os.chdir(path)
              message = "250 Working directory changed.\r\n"
              self.controlConnection.send(message.encode())
+             print("Changed working directory.")
          else:
              message = "550 The path name specified could not be found.\r\n"
              self.controlConnection.send(message.encode())
+             print("Unable to change working directory")
+
 
     def RMD(self, dir):
+        print("Remove directory requested.")
         if os.path.exists(dir):
-            print("true")
             os.rmdir(dir)
+            print("Directory removed.")
             message = "250 Directory removed.\r\n"
             self.controlConnection.send(message.encode())
         else:
+            print("Unable to remove directory.")
             message = "550 Directory does not exist.\r\n"
             self.controlConnection.send(message.encode())
 
     def MKD(self, newDir):
+        print("Make directory requested.")
         if os.path.exists(newDir):
+            print("Directory already exists.")
             message="521 Directory already exists.\r\n"
             self.controlConnection.send(message.encode())
         else:
             os.mkdir(newDir)
+            print("Directory created.")
             message="257 Directory created.\r\n"
             self.controlConnection.send(message.encode())
 
     def DELE(self, pathName):
+        print("Delete file requested.")
         if os.path.exists(pathName):
             os.remove(pathName)
+            print("File Deleted.")
             message = "250 File deleted.\r\n"
             self.controlConnection.send(message.encode())
         else:
+            print("Unable to delete file.")
             message = "450 Requested file could not be deleted.\r\n"
             self.controlConnection.send(message.encode())
 
     def TYPE(self, type):
+        print("Type change requested.")
         if type=='A':
             message = "200 ascii mode activated.\r\n"
             self.controlConnection.send(message.encode())
@@ -235,117 +268,140 @@ class FTPServer(threading.Thread):
             self.type='I'
         else:
             print("no type found")
+        print("Type changed.")
 
     def RETR(self, filename):
-        message = "150 Opening data connection"
-        self.controlConnection.send(message.encode())
+        print("Client download file requested.")
+        if os.path.exists(filename):
 
-        if not self.hasPort:
-            dataConnection, address = self.dataSocket.accept()
+            message = "150 Opening data connection"
+            self.controlConnection.send(message.encode())
 
-        if self.type=='A':
-            file = open(filename, 'r')
-            fileData = file.read(8192)
+            if not self.hasPort:
+                dataConnection, address = self.dataSocket.accept()
 
-            while fileData:
-                print("reading file")
-                if not self.hasPort:
-                    dataConnection.send((fileData + '\r\n').encode())
-                else:
-                    self.dataSocket.send((fileData + '\r\n').encode())
+            if self.type=='A':
+                file = open(filename, 'r')
                 fileData = file.read(8192)
+
+                while fileData:
+                    print("reading file")
+                    if not self.hasPort:
+                        dataConnection.send((fileData + '\r\n').encode())
+                    else:
+                        self.dataSocket.send((fileData + '\r\n').encode())
+                    fileData = file.read(8192)
+
+                file.close()
+                if not self.hasPort:
+                    dataConnection.close()
+                message = "226 file transfer completed successfully.\r\n"
+                self.controlConnection.send(message.encode())
+
+            elif self.type=='I':
+                file = open(filename, 'rb')
+                fileData = file.read(8192)
+
+                while fileData:
+                    print("reading file")
+                    if not self.hasPort:
+                        dataConnection.send(fileData)
+                    else:
+                        self.dataSocket.send(fileData)
+                    fileData = file.read(8192)
 
             file.close()
             if not self.hasPort:
                 dataConnection.close()
+            self.dataSocket.close()
+            self.dataSocket = None
             message = "226 file transfer completed successfully.\r\n"
             self.controlConnection.send(message.encode())
-
-        elif self.type=='I':
-            file = open(filename, 'rb')
-            fileData = file.read(8192)
-
-            while fileData:
-                print("reading file")
-                if not self.hasPort:
-                    dataConnection.send(fileData)
-                else:
-                    self.dataSocket.send(fileData)
-                fileData = file.read(8192)
-
-        file.close()
-        if not self.hasPort:
-            dataConnection.close()
-        self.dataSocket.close()
-        self.dataSocket = None
-        message = "226 file transfer completed successfully.\r\n"
-        self.controlConnection.send(message.encode())
+            print("File downloaded to client.")
+        else:
+            print("Requested file does not exist.")
+            message = "550 File requested does not exist.\r\n"
+            self.controlConnection.send(message.encode())
 
     def STOR(self, filename):
-        message = "150 Opening data connection"
-        self.controlConnection.send(message.encode())
-        if not self.hasPort:
-            dataConnection, address = self.dataSocket.accept()
-
-        if self.type=='A':
-            file = open(filename, 'w')
-
+        print("Upload file requested.")
+        if not os.path.exists(filename):
+            message = "150 Opening data connection"
+            self.controlConnection.send(message.encode())
             if not self.hasPort:
-                fileData = dataConnection.recv(8192).decode()
-            else:
-                fileData = self.dataSocket.recv(8192).decode()
+                dataConnection, address = self.dataSocket.accept()
 
-            while fileData:
-                print("writing file - A")
-                file.write(fileData)
+            if self.type=='A':
+                file = open(filename, 'w')
+
                 if not self.hasPort:
                     fileData = dataConnection.recv(8192).decode()
                 else:
                     fileData = self.dataSocket.recv(8192).decode()
 
-            file.close()
-            if not self.hasPort:
-                dataConnection.close()
-            self.dataSocket.close()
-            self.dataSocket = None
-            message = "226 file transfer completed successfully.\r\n"
-            self.controlConnection.send(message.encode())
+                while fileData:
+                    print("writing file - A")
+                    file.write(fileData)
+                    if not self.hasPort:
+                        fileData = dataConnection.recv(8192).decode()
+                    else:
+                        fileData = self.dataSocket.recv(8192).decode()
 
-        elif self.type=='I':
-            file = open(filename, 'wb')
-            if not self.hasPort:
-                fileData = dataConnection.recv(8192)
-            else:
-                fileData = self.dataSocket.recv(8192)
+                file.close()
+                if not self.hasPort:
+                    dataConnection.close()
+                self.dataSocket.close()
+                self.dataSocket = None
+                message = "226 file transfer completed successfully.\r\n"
+                self.controlConnection.send(message.encode())
 
-            while fileData:
-                file.write(fileData)
+            elif self.type=='I':
+                file = open(filename, 'wb')
                 if not self.hasPort:
                     fileData = dataConnection.recv(8192)
                 else:
                     fileData = self.dataSocket.recv(8192)
 
-            file.close()
-            message = "226 file transfer completed successfully.\r\n"
+                while fileData:
+                    file.write(fileData)
+                    if not self.hasPort:
+                        fileData = dataConnection.recv(8192)
+                    else:
+                        fileData = self.dataSocket.recv(8192)
+
+                file.close()
+                message = "226 file transfer completed successfully.\r\n"
+                self.controlConnection.send(message.encode())
+                if not self.hasPort:
+                    dataConnection.close()
+                self.dataSocket.close()
+                self.dataSocket = None
+            print("File uploaded to server.")
+        else:
+            print("File already exists.")
+            message = "550 Filename already exists.\r\n"
             self.controlConnection.send(message.encode())
-            if not self.hasPort:
-                dataConnection.close()
-            self.dataSocket.close()
-            self.dataSocket = None
 
     def SYST(self):
+        print("System requested.")
         message = "215 " + os.name + ".\r\n"
         self.controlConnection.send(message.encode())
+        print("System sent.")
 
     def NOOP(self):
+        print("Noop requested.")
         message = "200 NOOP OK\r\n"
         self.controlConnection.send(message.encode())
+        print("Noop sent.")
     def QUIT(self):
+        print("Quit requested.")
         message = "221 FTP connection terminated.\r\n"
         self.controlConnection.send(message.encode())
         self.controlConnection.close()
+        print("Connection closed.")
 
     def UNKNOWN(self):
+        print("Unknown command.")
         message = "202 Command not implemented.\r\n"
         self.controlConnection.send(message.encode())
 def createControlSocket(host, port):

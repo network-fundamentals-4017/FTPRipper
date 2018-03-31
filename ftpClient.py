@@ -26,7 +26,7 @@ def Main():
             # getSystem(controlSocket)
             # setPort(controlSocket)
             # changeWorkingDirectory(controlSocket, 'files')
-            # downloadBinFiles(controlSocket,'files/doc.txt')
+            downloadBinFiles(controlSocket,'files/doc.txt')
             # deleteFile(controlSocket, 'files/doc.txt')
             # printDirectory(controlSocket)
             # removeDirectory(controlSocket, 'newDir')
