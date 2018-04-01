@@ -144,12 +144,12 @@ class FTPServer(threading.Thread):
             message = "200 Transfer mode set to stream.\r\n"
             self.controlConnection.send(message.encode())
         elif data=='B':
-            self.mode=='B'
-            message = "200 Transfer mode set to block.\r\n"
+            self.mode=='S'
+            message = "500 Only stream mode is available.\r\n"
             self.controlConnection.send(message.encode())
         elif data=='C':
-            self.mode=='C'
-            message = "200 Transfer mode set to compression.\r\n"
+            self.mode=='S'
+            message = "500 Only stream mode is available.\r\n"
             self.controlConnection.send(message.encode())
         else:
             message = "500 Unrecognised transfer mode.\r\n"
@@ -161,12 +161,12 @@ class FTPServer(threading.Thread):
             message = "200 Structure set to file.\r\n"
             self.controlConnection.send(message.encode())
         elif data == 'R':
-            self.stru == 'R'
-            message = "200 Structure set to record.\r\n"
+            self.stru == 'F'
+            message = "500 Only file structure available.\r\n"
             self.controlConnection.send(message.encode())
         elif data == 'P':
-            self.stru == 'P'
-            message = "200 Structure set to page.\r\n"
+            self.stru == 'F'
+            message = "500 Only file structure available.\r\n"
             self.controlConnection.send(message.encode())
         else:
             message = "500 Unrecognised structure code.\r\n"
