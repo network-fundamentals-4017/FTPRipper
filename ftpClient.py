@@ -3,7 +3,7 @@ import sys
 
 
 def Main():
-    host = '10.30.240.173'
+    host = '192.168.56.1'
     port = 21
 
     print("Begin FTP Client...")
@@ -26,13 +26,13 @@ def Main():
             # getSystem(controlSocket)
             # setPort(controlSocket)
             # changeWorkingDirectory(controlSocket, 'files')
-            downloadBinFiles(controlSocket,'files/doc.txt')
+            #downloadBinFiles(controlSocket,'files/doc.txt')
             # deleteFile(controlSocket, 'files/doc.txt')
             # printDirectory(controlSocket)
             # removeDirectory(controlSocket, 'newDir')
             # makeDirectory(controlSocket, 'newDir')
             # getList(controlSocket)
-            uploadFile(controlSocket, 'test2.txt', 'files/test2.txt')
+            #uploadFile(controlSocket, 'test2.txt', 'files/test2.txt')
     # printDirectory(controlSocket)
     # quit(controlSocket)
     controlSocket.close()

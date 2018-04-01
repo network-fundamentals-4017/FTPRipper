@@ -61,28 +61,28 @@ class FTPServer(threading.Thread):
                     self.UNKNOWN()
 
 
-    def USER(self):
+    def USER(self):#This function notifies the client that a connection has been set up and asks them for their username.
         message = "220 Server socket established\r\n"
         print(message)
         self.controlConnection.send(message.encode())
         data = self.controlConnection.recv(1024).decode()
         print("Username received.")
         username = data[5:].strip()
-        if self.checkUserExists(username):
+        if self.checkUserExists(username):#If the username exists, the server asks the client for their password.
             print("Username exists.")
             self.PASS(username)
-        else:
+        else:#An error code of 530 is sent to the user if the username they supplied does not exist.
             message = "530 Unknown user\r\n"
             print("Username does not exist.")
             self.controlConnection.send(message.encode())
 
-    def PASS(self, username):
+    def PASS(self, username):#This function handles the password communication between the server and the client.
         message = "331 Password required\r\n"
         self.controlConnection.send(message.encode())
         data = self.controlConnection.recv(1024).decode()
         print("Password received.")
         password = data[5:].strip()
-        if self.checkPassword(username, password):
+        if self.checkPassword(username, password):#If the password matches the username - the user is logged in.
             message = "230 Login successful\r\n"
             print("Password accepted.")
             self.clientLoggedIn=True
@@ -92,7 +92,7 @@ class FTPServer(threading.Thread):
             message = "530 Incorrect Password\r\n"
             self.controlConnection.send(message.encode())
 
-    def checkUserExists(self, username):
+    def checkUserExists(self, username): #A check to see the the username exists.
         with open("users.txt", 'r') as f:
             users = json.load(f)
         f.close()
@@ -100,7 +100,7 @@ class FTPServer(threading.Thread):
             return True
         return False
 
-    def checkPassword(self, username, password):
+    def checkPassword(self, username, password):#Check if the password matches the username.
         with open("users.txt", 'r') as f:
             users = json.load(f)
         f.close()
@@ -108,25 +108,25 @@ class FTPServer(threading.Thread):
             return True
         return False
 
-    def getCommnand(self, data):
+    def getCommnand(self, data):#Extracts the command from the data received.
         command = data[:4].strip()
         return command
 
-    def getInfo(self, data):
+    def getInfo(self, data):#Extracts the additional information from the data received.
         info = data[data.find(' ')+1:data.find('\r\n')]
         return info
 
-    def PASV(self):
+    def PASV(self):#sets up a data socket to allow for information transfer.
         address = socket.gethostbyname(socket.gethostname())
         address = address.split(".")
         address = ','.join(address)
         address = "("+address+",30,60)"
         message = "227 Passive Mode " + address +"\r\n"
-        self.getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)
+        self.getDataSocket(socket.gethostbyname(socket.gethostname()), 7740)#creates a new socket.
         self.controlConnection.send(message.encode())
         print("Passive data connection set up.")
 
-    def PORT(self, data):
+    def PORT(self, data):#Sets up the port requested by the user.
         print("PORT requested.")
         data = data.split(",")
         dataHost = '.'.join(data[0:4])
@@ -137,7 +137,7 @@ class FTPServer(threading.Thread):
         self.controlConnection.send(message.encode())
         self.hasPort = True
 
-    def MODE(self, data):
+    def MODE(self, data): #Changes the mode of transfer - (transfer modes are not implemented)
         print("Mode check.")
         if data=='S':
             self.mode='S'
@@ -155,7 +155,7 @@ class FTPServer(threading.Thread):
             message = "500 Unrecognised transfer mode.\r\n"
             self.controlConnection.send(message.encode())
 
-    def STRU(self, data):
+    def STRU(self, data):#Changes the file structure
         if data == 'F':
             self.stru = 'F'
             message = "200 Structure set to file.\r\n"
@@ -172,12 +172,12 @@ class FTPServer(threading.Thread):
             message = "500 Unrecognised structure code.\r\n"
             self.controlConnection.send(message.encode())
 
-    def getDataSocket(self, host, port):
+    def getDataSocket(self, host, port):#creates the data socket with the information supplied from the PASV or PORT commands.
         self.dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.dataSocket.bind((host, port))
         self.dataSocket.listen(1)
 
-    def LIST(self):
+    def LIST(self):#Sends the listing of the files in the directory over the data socket.
         print("Directory listing requested.")
         message = "150 Here comes the directory listing...\r\n"
         self.controlConnection.send(message.encode())
@@ -200,14 +200,14 @@ class FTPServer(threading.Thread):
         self.dataSocket = None
         return
 
-    def PWD(self):
+    def PWD(self):#Sends the path of the current directory.
         print("Print working directory requested.")
         pwd = os.getcwd()
         message = "257 " + pwd + " is the current working directory.\r\n"
         self.controlConnection.send(message.encode())
         print("Working directory sent.")
 
-    def CWD(self, path):
+    def CWD(self, path):#Changes the working directory.
          print("Change working directory requested.")
          if os.path.exists(path):
              os.chdir(path)
@@ -220,7 +220,7 @@ class FTPServer(threading.Thread):
              print("Unable to change working directory")
 
 
-    def RMD(self, dir):
+    def RMD(self, dir):#Removes a directory.
         print("Remove directory requested.")
         if os.path.exists(dir):
             os.rmdir(dir)
@@ -232,7 +232,7 @@ class FTPServer(threading.Thread):
             message = "550 Directory does not exist.\r\n"
             self.controlConnection.send(message.encode())
 
-    def MKD(self, newDir):
+    def MKD(self, newDir):#Creates a new diretory.
         print("Make directory requested.")
         if os.path.exists(newDir):
             print("Directory already exists.")
@@ -244,7 +244,7 @@ class FTPServer(threading.Thread):
             message="257 Directory created.\r\n"
             self.controlConnection.send(message.encode())
 
-    def DELE(self, pathName):
+    def DELE(self, pathName):#Deletes a stored on the server.
         print("Delete file requested.")
         if os.path.exists(pathName):
             os.remove(pathName)
@@ -256,7 +256,7 @@ class FTPServer(threading.Thread):
             message = "450 Requested file could not be deleted.\r\n"
             self.controlConnection.send(message.encode())
 
-    def TYPE(self, type):
+    def TYPE(self, type):#Changes the type to ascii or binary mode.
         print("Type change requested.")
         if type=='A':
             message = "200 ascii mode activated.\r\n"
@@ -267,14 +267,16 @@ class FTPServer(threading.Thread):
             self.controlConnection.send(message.encode())
             self.type='I'
         else:
+            message = "500 unknown data type requested.\r\n"
+            self.controlConnection.send(message.encode())
             print("no type found")
         print("Type changed.")
 
-    def RETR(self, filename):
+    def RETR(self, filename):#Client is able to download a file using this function
         print("Client download file requested.")
-        if os.path.exists(filename):
+        if os.path.exists(filename):#Check that the requested file exists.
 
-            message = "150 Opening data connection"
+            message = "150 Opening data connection.\r\n"
             self.controlConnection.send(message.encode())
 
             if not self.hasPort:
@@ -323,9 +325,9 @@ class FTPServer(threading.Thread):
             message = "550 File requested does not exist.\r\n"
             self.controlConnection.send(message.encode())
 
-    def STOR(self, filename):
+    def STOR(self, filename):#Function that allows the client to upload to the server
         print("Upload file requested.")
-        if not os.path.exists(filename):
+        if not os.path.exists(filename):#check is the file already exists to avoid over writing it.
             message = "150 Opening data connection"
             self.controlConnection.send(message.encode())
             if not self.hasPort:
