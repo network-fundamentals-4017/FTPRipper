@@ -26,6 +26,7 @@ tab = "    "
 connected = False
 runOnServer = True
 
+#defines what goes in the status bar for the command application
 def get_statusbar_text():
     if runOnServer:
         return [
@@ -41,10 +42,12 @@ def get_statusbar_text():
 
         ]
 
+#used to define the autocomplete function. loads the predictive text in form the list of commands
 class mainCompleter(Completer):
     def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor(WORD=False)
         currentLine = document.current_line
+        #diffrent logic is applied if there are commands spesified or the command starts with a !
         if (" " in currentLine):
             options=[]
         if(currentLine[0:1]=='!'):
@@ -58,20 +61,15 @@ class mainCompleter(Completer):
         else:
             runOnServer = True
             options = runOptions
+        #do matching to only load predictive text with what has currently been typed
         matches = fuzzyfinder(word_before_cursor, options)
         for m in matches:
             yield Completion(m, start_position=-len(word_before_cursor))
 
-def ll(params):
-    FileStreem = []
-    ftp.dir(FileStreem.append)
-    outputLine = ""
-    for line in FileStreem:
-        outputLine+=line +"\n"
-    printSystemOuput(outputLine)
-
+#below are the actual FTP commans that are sent to the server
 
 def ls(params):
+    #list files
     dataSocket = getDataSocket()
     message = 'LIST\r\n'
     controlSocket.send(message.encode())
@@ -79,17 +77,19 @@ def ls(params):
     controlData = controlSocket.recv(8192).decode()
     printResponceOutput("S: " + controlData)
     data = dataSocket.recv(8192).decode()
-    printSystemOuput("S: " + data)
+    printSystemOuput(data.replace("\t",tab))
     controlData = controlSocket.recv(8192).decode()
     dataSocket.close()
 
 def getDataSocket():
+    #generate a data socket
 	dataHost, dataPort = getPortNumber()
 	dataSocket = setupDataConnection(dataHost, dataPort)
 	return dataSocket
 
 
 def getPortNumber():
+    #calculate the port numbers
     message = 'PASV\r\n'
     controlSocket.send(message.encode())
     printResponceOutput("C: " + message)
@@ -99,17 +99,20 @@ def getPortNumber():
     data = data.split(",")
     dataHost = '.'.join(data[0:4])
     dataPort = data[-2:]
+    printResponceOutput(str(dataPort))
     dataPort = (int(dataPort[0]) * 256) + int(dataPort[1])
     return (dataHost, dataPort)
 
 
 def setupDataConnection(dataHost, dataPort):
+    #make a data connection to the server
     dataSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dataSocket.connect((dataHost, dataPort))
     return dataSocket
 
 
 def cd(params):
+    #execuate a change directory command
     message = ('CWD {}\r\n'.format(params[0]))
     controlSocket.send(message.encode())
     printResponceOutput ("C: " + message)
@@ -117,6 +120,7 @@ def cd(params):
     printResponceOutput("S: " + controlData)
 
 def pwd(params):
+    #execute a print working directory command
     message = ('PWD \r\n')
     controlSocket.send(message.encode())
     printResponceOutput ("C: " + message)
@@ -124,7 +128,8 @@ def pwd(params):
     printSystemOuput("S: " + controlData)
 
 
-def rm(params):
+def rmd(params):
+    #execute a remove directory command
     message = ('RMD {}\r\n'.format(params[0]))
     controlSocket.send(message.encode())
     printResponceOutput ("C: " + message)
@@ -132,6 +137,7 @@ def rm(params):
     printResponceOutput ("S: " + controlData)
 
 def mkdir(params):
+    #execute a make directory command
     if params[0]=="":
         printResponceOutput("No folder name spesified")
         return
@@ -142,59 +148,71 @@ def mkdir(params):
     printResponceOutput("S: " + controlData)
 
 def help(params):
+    #print the system help for all the functions spesifed in the function list. 
     printSystemOuput("All possible commands are:")
     for command in runOptions.items():
         if (len(command[0]) < 4):
-            printSystemOuput(command[0] + "\t\t" + command[1][1])
+            printSystemOuput(command[0] + tab + tab + command[1][1])
             continue
-        printSystemOuput(command[0] + "\t" + command[1][1])
+        printSystemOuput(command[0] + tab + command[1][1])
 
 def close(params):
-    ftp.quit()
+    #exit the server session
     global connected
     connected = False
-    result = input(
-        "connection to the server has been closed. Do you want to make a new connection (Y/n)")
-    if result == "" or result == "Y" or result == "y":
-        return
+    controlSocket.close()
     sys.exit()
 
 def push(params):
-    message = 'TYPE I\r\n'
+    #preform the upload(push) command. 
+    if os.path.exists(params[0]):
+        message = 'TYPE I\r\n'
+        controlSocket.send(message.encode())
+        printResponceOutput("C: " + message)
+        controlData = controlSocket.recv(8192).decode()
+        dataSocket = getDataSocket()
+        message = 'STOR {}\r\n'.format(params[1])
+        controlSocket.send(message.encode())
+        printResponceOutput("S: " + controlSocket.recv(8192).decode())
+
+        file = open('{}'.format(params[0]), 'rb')
+        reading = file.read(8192)
+
+        while reading:
+            dataSocket.send(reading)
+            reading = file.read(8192)
+        printSystemOuput("File upload complete")
+        dataSocket.close()
+        controlData = controlSocket.recv(8192).decode()
+        printResponceOutput("S: " + controlData)
+        file.close()
+    else:
+        printResponceOutput("C: " + "could not find file")
+    
+def dele(params):
+    #delete a file form the server
+    message = ('DELE {}\r\n'.format(params[0]))
     controlSocket.send(message.encode())
     printResponceOutput("C: " + message)
     controlData = controlSocket.recv(8192).decode()
-    dataSocket = getDataSocket()
-    message = 'STOR {}\r\n'.format(params[1])
-    controlSocket.send(message.encode())
-    printResponceOutput("S: " + controlSocket.recv(8192).decode())
-
-    file = open('{}'.format(params[0]), 'rb')
-    reading = file.read(8192)
-
-    while reading:
-        dataSocket.send(reading)
-        reading = file.read(8192)
-    printSystemOuput("File upload complete")
-    controlData = controlSocket.recv(8192).decode()
     printResponceOutput("S: " + controlData)
-    file.close()
-    dataSocket.close()
 
 
 def get(params):
+    #preform a download command
+    printResponceOutput("Download initiated")
     message = 'TYPE I\r\n'
     controlSocket.send(message.encode())
     printResponceOutput("C: " + message)
     controlData = controlSocket.recv(8192).decode()
     printResponceOutput("S: " + controlData)
-    dataSocket = getDataSocket(controlSocket)
+    dataSocket = getDataSocket()
     message = 'RETR {}\r\n'.format(params[0])
     controlSocket.send(message.encode())
     printResponceOutput("S: " + controlSocket.recv(8192).decode())
 
     file_data = dataSocket.recv(8192)
-    f = open("text.txt", 'wb')
+    f = open('{}'.format(params[1]), 'wb')
 
     while file_data:
         f.write(file_data)
@@ -203,12 +221,14 @@ def get(params):
     printResponceOutput("S" + controlSocket.recv(8192).decode())
 
 def logout(params):
+    #logs the user out of the current session
     message = 'QUIT\r\n'
     controlSocket.send(message.encode())
     printResponceOutput ("C: " + message)
     controlData = controlSocket.recv(8192).decode()
     printResponceOutput("S: " + controlData)
 
+#below is the functionality to enable the user to run commands on the local machine
 def osCommands(userInput):
 
     def oscd(params):
@@ -230,6 +250,7 @@ def osCommands(userInput):
         printSystemOuput(outPut)
 
     def oshelp(params):
+        #print the os spesific help
         printSystemOuput("All possible commands for system calls (defined by !) are:")
         for command in osOptions.items():
             if (len(command[0]) < 4):
@@ -244,6 +265,7 @@ def osCommands(userInput):
         'ls': [osls,"List the files in a directory"],
         'help': [oshelp,"List help of system based commands"]
     }
+    #sanitise user inputs
     if len(userInput) > 0:
         command = userInput[0]
         if len(userInput) > 1:
@@ -255,14 +277,14 @@ def osCommands(userInput):
         else:
             printSystemOuput("Command: '" + command + "' not found. Run 'help' to view all posible commands")
 
-
+#dictionary to store the relevent OS level commands and the associated description of the function
 runOptions = {
-    'll': [ll,"List all files and folders, with permissions, size and ownership, in the current directory of the server"],
     'ls': [ls, "List all files and folders in the current directory of the server"],
     '!': [osCommands,"Any command proceeded by a bang will be run on the local machine(type !help for more)."],
     'cd': [cd, "Change Location of the server path to specified parameter. Relative paths are acceptable"],
     'pwd': [pwd, "Print the full current server path"],
-    'rm': [rm, "Remove file(or folder) on server"],
+    'rmd': [rmd, "Remove directory on the server"],
+    'del': [dele, "delete file on the server"],
     'download': [get, "Retrives a file from the remote server to current location on local machine"],
     'upload': [push,"Upload file from local machine to the remote server"],
     'mkdir': [mkdir, "Create a folder on server"],
@@ -272,6 +294,7 @@ runOptions = {
 }
 
 def userLogin():
+    #executes the user login process. 
     server = False
     global controlSocket
     while not server:
@@ -302,21 +325,22 @@ def userLogin():
 
                 message = 'USER {}\r\n'.format(username)
                 controlSocket.send(message.encode())
-                printResponceOutput("C: " + message)
+                print("C: " + message)
                 data = controlSocket.recv(8192).decode()
-                printResponceOutput("S: " + data)
-                # if data.startswith("331") or data.startswith("332"):
-                message = 'PASS {}\r\n'.format(password)
-                controlSocket.send(message.encode())
-                printResponceOutput("C: " + message)
-                data = controlSocket.recv(8192).decode()
-                printResponceOutput("S: " + data)
+                print("S: " + data)
+                if data.startswith("331") or data.startswith("332"):
+                    message = 'PASS {}\r\n'.format(password)
+                    controlSocket.send(message.encode())
+                    print("C: " + message)
+                    data = controlSocket.recv(8192).decode()
+                    print("S: " + data)
                 if data.startswith("230"):
                     print("Successfully logged into ftp server :)")
+                    login = True
                 if data.startswith("530"):
                     print("Login failed")
+                    login = False
 
-                login = True
             except Exception as e:
                 print( "Could not log into the server " + str(e))
         if server and login:
@@ -324,7 +348,7 @@ def userLogin():
             print("Entered FTP shell")
             global connected
             connected = True
-
+#command running process to sanitise user input and call correct section of code
 def runCommand(_):
     splitUserInput = _.text.splitlines()
     userInput = splitUserInput[len(splitUserInput)-1]
@@ -348,6 +372,7 @@ def runCommand(_):
                         "Command: '" + command + "' not found. Run 'help' to view all posible commands")
     left_buffer.insert_line_below()
 
+#buffer to store the user input
 left_buffer = Buffer(accept_handler=runCommand,
                      multiline=False,
                      completer=mainCompleter(),
@@ -355,33 +380,38 @@ left_buffer = Buffer(accept_handler=runCommand,
                      complete_while_typing=True
                      )
 
+#input window, storing the user input buffer
 left_window = Window(BufferControl(buffer=left_buffer))
 
+#one of two regions used to store system ouput
 responseOutput = TextArea(
     text="FTP Communication Responses(and commands)",
     scrollbar=True,
     line_numbers=True,
     )
 
+#region to display the system outputs
 systemOutput = TextArea(
     text="System Output",
     scrollbar=True,
     line_numbers=True,
     )
 
+#function to append new text to the responce ouput text area
 def printResponceOutput(text):
     currentText=responseOutput.document.text
     newText = currentText+"\n"+text
     tempDoc = prompt_toolkit.document.Document(text=newText)
     responseOutput.document = tempDoc
 
-
+#function to append new text to the system output text area
 def printSystemOuput(text):
     currentText=systemOutput.document.text
     newText = currentText+"\n"+text
     tempDoc = prompt_toolkit.document.Document(text=newText)
     systemOutput.document = tempDoc
 
+#storage section to store the regions, acts as the "body" of the application
 body = FloatContainer(
     content=VSplit([
     left_window,
@@ -402,6 +432,7 @@ body = FloatContainer(
     ]
 )
 
+#stores all the sections, including the status bar
 root_container = HSplit([
     # The titlebar.
     Window(content=FormattedTextControl(
@@ -420,14 +451,14 @@ kb = KeyBindings()
 
 @kb.add('c-c', eager=True)
 @kb.add('c-q', eager=True)
-def _(event):
-    event.app.set_result(None)
+def exit_(event):
+    close("")
 
 @kb.add('c-s', eager=True)
 def _(event):
     addModifier()
 
-
+#keyboard shortcut to add client side commands
 def addModifier():
     currentBuffer = left_buffer.text
     splitBuffer = currentBuffer.splitlines()
@@ -445,6 +476,7 @@ def default_buffer_changed(_):
     pass
     # right_buffer.text += "1"
 
+#initiate and run the application with all the elements spesified above
 application = Application(
     layout=Layout(root_container, focused_element=left_window),
     key_bindings=kb,
@@ -457,5 +489,7 @@ def run():
 
 
 if __name__ == '__main__':
+    #log the user in first
     userLogin()
+    #then run the main session
     run()

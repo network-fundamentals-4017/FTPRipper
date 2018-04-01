@@ -1887,3 +1887,956 @@
 +help
 +
 +
+
+# 2018-03-31 14:22:43.102419
++quit
++
+
+# 2018-03-31 14:23:35.406727
++ls
++
+
+# 2018-03-31 14:23:56.430745
++ls
++cd files
++
+
+# 2018-03-31 14:23:58.518544
++ls
++cd files
++ls
++
+
+# 2018-03-31 14:24:01.969272
++ls
++cd files
++ls
++cd ..
++
+
+# 2018-03-31 14:24:06.640643
++ls
++cd files
++ls
++cd ..
++! ls
++
+
+# 2018-03-31 14:24:59.687155
++ls
++cd files
++ls
++cd ..
++
+
+# 2018-03-31 14:25:08.150709
++ls
++cd files
++ls
++cd ..
++ls
++
+
+# 2018-03-31 14:25:10.856304
++ls
++cd files
++ls
++cd ..
++ls
++cd files
++
+
+# 2018-03-31 14:25:11.995181
++ls
++cd files
++ls
++cd ..
++ls
++cd files
++ls
++
+
+# 2018-03-31 14:25:13.544417
++ls
++cd files
++ls
++cd ..
++ls
++cd files
++ls
++! ls
++
+
+# 2018-03-31 14:29:40.515992
++exit
++
+
+# 2018-03-31 14:31:37.542618
++ls
++
+
+# 2018-03-31 14:43:44.049914
++ls
++cd files
++
+
+# 2018-03-31 14:43:46.811429
++ls
++cd files
++! ls
++
+
+# 2018-03-31 14:46:39.697536
++close\
++
+
+# 2018-03-31 14:46:39.850497
++close\
++\
++
+
+# 2018-03-31 14:46:39.985905
++close\
++\
++\
++
+
+# 2018-03-31 14:46:40.356265
++close\
++\
++\
++
++
+
+# 2018-03-31 14:50:50.807698
++close\
++\
++\
++
++ls
++
+
+# 2018-03-31 14:50:53.045886
++close\
++\
++\
++
++ls
++cd files
++
+
+# 2018-03-31 14:50:54.242081
++close\
++\
++\
++
++ls
++cd files
++ls
++
+
+# 2018-03-31 14:50:56.728361
++close\
++\
++\
++
++ls
++cd files
++ls
++! ls
++
+
+# 2018-03-31 14:51:22.247582
++close\
++\
++\
++
++ls
++cd files
++ls
++cd ..
++
+
+# 2018-03-31 14:51:23.280343
++close\
++\
++\
++
++ls
++cd files
++ls
++cd ..
++ls
++
+
+# 2018-03-31 14:51:42.300980
++close\
++\
++\
++
++ls
++cd files
++ls
++cd ..
++! ls
++
+
+# 2018-03-31 14:53:25.422112
++ls
++
+
+# 2018-03-31 14:54:50.107427
++ls
++! ls
++
+
+# 2018-03-31 14:56:57.939189
++close\
++\
++\
++
++ls
++cd files
++ls
++cd ..
++! ls
++upload files/test2.txt text2.txt
++
+
+# 2018-03-31 15:07:53.588525
++! ls
++
+
+# 2018-03-31 15:07:57.031185
++! ls
++pwd
++
+
+# 2018-03-31 15:07:58.764220
++! ls
++pwd
++pwd
++
+
+# 2018-03-31 15:07:59.846396
++! ls
++pwd
++pwd
++pwd
++
+
+# 2018-03-31 15:08:01.459255
++! ls
++pwd
++pwd
++pwd
++cd files
++
+
+# 2018-03-31 15:13:50.644530
++! ls
++
+
+# 2018-03-31 15:14:00.712189
++! ls
++upload text.txt files/text3.txt
++
+
+# 2018-03-31 15:14:04.291673
++! ls
++upload text.txt files/text3.txt
++ls
++
+
+# 2018-03-31 15:14:06.698744
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++
+
+# 2018-03-31 15:14:07.526858
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++ls
++
+
+# 2018-03-31 15:14:11.697265
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++ls
++cd ..
++
+
+# 2018-03-31 15:14:26.364956
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++ls
++cd ..
++upload text.txt files/mynewfile.txt
++
+
+# 2018-03-31 15:14:36.277786
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++ls
++cd ..
++upload text.txt files/mynewfile.txt
++cd files
++
+
+# 2018-03-31 15:14:37.987872
++! ls
++upload text.txt files/text3.txt
++ls
++cd files
++ls
++cd ..
++upload text.txt files/mynewfile.txt
++cd files
++ls
++
+
+# 2018-03-31 15:17:03.747831
++ls
++
+
+# 2018-03-31 15:17:05.458267
++ls
++cd files
++
+
+# 2018-03-31 15:17:06.217244
++ls
++cd files
++ls
++
+
+# 2018-03-31 15:20:25.744979
++ls
++
+
+# 2018-03-31 15:20:26.763599
++ls
++cd files
++
+
+# 2018-03-31 15:20:27.820987
++ls
++cd files
++ls
++
+
+# 2018-03-31 15:27:08.628205
++ls
++
+
+# 2018-03-31 15:27:10.483345
++ls
++cd files
++
+
+# 2018-03-31 15:27:12.923243
++ls
++cd files
++ls
++
+
+# 2018-03-31 15:30:10.743338
++cd files
++
+
+# 2018-03-31 15:30:11.543615
++cd files
++ls
++
+
+# 2018-03-31 15:30:59.455956
++download files/test.txt test.txt
++
+
+# 2018-03-31 15:31:04.551702
++download files/test.txt test.txt
++ls
++
+
+# 2018-03-31 15:31:07.185786
++download files/test.txt test.txt
++ls
++! ls
++
+
+# 2018-03-31 13:37:20.528764
++ls
++
+
+# 2018-03-31 13:37:54.653190
++ls
++download test2.txt newtestfile.txt
++
+
+# 2018-03-31 13:39:52.687586
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++
+
+# 2018-03-31 13:40:12.097025
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++
+
+# 2018-03-31 13:40:31.827665
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++
+
+# 2018-03-31 13:40:49.277699
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++
+
+# 2018-03-31 13:41:03.610300
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++
+
+# 2018-03-31 13:41:08.881937
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++
+
+# 2018-03-31 13:41:10.114375
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++
+
+# 2018-03-31 13:41:14.878641
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++
+
+# 2018-03-31 13:41:32.679159
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++
+
+# 2018-03-31 13:41:35.239125
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++cd ..
++
+
+# 2018-03-31 13:41:37.455227
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++cd ..
++ls
++
+
+# 2018-03-31 13:41:40.495058
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++cd ..
++ls
++ll
++
+
+# 2018-03-31 13:41:49.104895
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++cd ..
++ls
++ll
++ls
++
+
+# 2018-03-31 13:41:50.132550
++ls
++download test2.txt newtestfile.txt
++upload newtestfile.txt thefilefordan.txt
++! ls
++upload testfile.txt newthefilefordan.txt
++ls
++mkdir testdir
++cd testdir
++ls
++pwd
++pwd
++cd ..
++ls
++ll
++ls
++ll
++
+
+# 2018-03-31 13:43:54.836391
++ls
++
+
+# 2018-03-31 13:44:23.133339
++ls
++! ls
++
+
+# 2018-03-31 13:45:25.963263
++ls
++! ls
++ls
++
+
+# 2018-03-31 13:46:53.349543
++ls
++
+
+# 2018-03-31 13:50:46.110876
++ls
++rm testdir
++
+
+# 2018-03-31 13:53:32.648021
++ls
++
+
+# 2018-03-31 13:53:53.415858
++ls
++help
++
+
+# 2018-03-31 13:54:17.843119
++ls
++help
++del text.txt
++
+
+# 2018-03-31 13:55:03.471157
++ls
++help
++del text.txt
++rm random
++
+
+# 2018-03-31 13:55:13.046714
++ls
++help
++del text.txt
++rm random
++rmd random
++
+
+# 2018-03-31 13:55:29.058613
++ls
++help
++del text.txt
++rm random
++rmd random
++mkdir files
++
+
+# 2018-03-31 13:55:45.113254
++ls
++help
++del text.txt
++rm random
++rmd random
++mkdir files
++! ls
++
+
+# 2018-03-31 13:55:59.105356
++ls
++help
++del text.txt
++rm random
++rmd random
++mkdir files
++! ls
++upload history.txt files/newfile.txt
++
+
+# 2018-03-31 13:58:50.599553
++upload asdf.txt sadf.xx
++
+
+# 2018-03-31 13:59:06.018986
++upload asdf.txt sadf.xx
++ls
++
+
+# 2018-03-31 14:24:38.373147
++ls
++
+
+# 2018-03-31 14:25:48.506178
++ls
++download history.txt newhistory.txt
++
+
+# 2018-03-31 14:25:53.220460
++ls
++download history.txt newhistory.txt
++! ls
++
+
+# 2018-03-31 14:27:08.928032
++! ls
++
+
+# 2018-03-31 14:27:54.419703
++ls
++
+
+# 2018-03-31 14:27:59.271301
++ls
++! ls
++
+
+# 2018-03-31 14:28:58.942371
++ls
++
+
+# 2018-03-31 14:29:09.133716
++ls
++! ls
++
+
+# 2018-03-31 14:29:17.754156
++ls
++! ls
++upload test2.txt test2.txt
++
+
+# 2018-03-31 14:30:23.515849
++! ls
++
+
+# 2018-03-31 14:30:31.327209
++! ls
++upload test2.txt sadf.txt
++
+
+# 2018-03-31 14:30:47.060034
++! ls
++upload test2.txt sadf.txt
++ls
++
+
+# 2018-03-31 14:30:50.749492
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++
+
+# 2018-03-31 14:30:57.140428
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++
+
+# 2018-03-31 14:30:59.376335
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++
+
+# 2018-03-31 14:31:01.474951
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++
+
+# 2018-03-31 14:31:02.817828
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++
+
+# 2018-03-31 14:31:13.158135
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++
+
+# 2018-03-31 14:31:28.557462
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
+
+# 2018-03-31 14:31:35.306332
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++
+
+# 2018-03-31 14:31:40.431583
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++
+
+# 2018-03-31 14:31:42.660108
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++
+
+# 2018-03-31 14:31:43.709863
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++
+
+# 2018-03-31 14:31:49.708842
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++cd ..
++
+
+# 2018-03-31 14:31:52.726551
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++cd ..
++rmdir newdir
++
+
+# 2018-03-31 14:31:57.306459
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++cd ..
++rmdir newdir
++rmd newdir
++
+
+# 2018-03-31 14:31:59.157883
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++cd ..
++rmdir newdir
++rmd newdir
++ls
++
+
+# 2018-03-31 14:32:10.016832
++! ls
++upload test2.txt sadf.txt
++ls
++pwd
++cd files
++ls
++cd ..
++ls
++mkdir newdir
++cd newdir
++
++ls
++ls
++pwd
++cd ..
++rmdir newdir
++rmd newdir
++ls
++del sadf.txt
++
