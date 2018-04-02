@@ -22,17 +22,24 @@ source venv/bin/activate
 
 this will: create a virtual environment, and then activate the venv. Next, required the python libraries are installed with:
 
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 
 At this point all but one libraries have been installed. The last one is the python-prompt-toolkit. Unfortunately, this has to be installed from source as the developers have not put the latest version onto pip yet. To install this, run the following commands (from within the venv created before, and from the root folder of the ftp ripper repo directory):
 
-```git clone https://github.com/jonathanslenders/python-prompt-toolkit
+```
+git clone https://github.com/jonathanslenders/python-prompt-toolkit
 cd python-prompt-toolkit
 pip install . 
 ```
 
 To ensure that the correct version of python-prompt-toolkit has been installed, run from within the venv:
-```pip list | grep "prompt-toolkit" ```
+```
+pip list | grep "prompt-toolkit" 
+```
 
 This should show version 2.x. If this is correctly installed. If so, the client can now be run with:
-```python3 ftpRipper.py ```
+```
+python3 ftpRipper.py
+```
