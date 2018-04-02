@@ -25,7 +25,7 @@ At this point all but one libraries have been installed. The last one is the pyt
 cd python-prompt-toolkit
 pip install .
 
-To ensure that the correct version of python-prompt-toolkit has been installed, running:
+To ensure that the correct version of python-prompt-toolkit has been installed, run from within the venv:
 >pip list | grep "prompt-toolkit"
 
 This should show version 2.x. If this is correctly installed. If so, the client can now be run with:
